@@ -16,11 +16,7 @@ data/historical/
 # Logs
 logs/
 
-# Excluded files
-.claude/
-Autonomous traders/
-Gemini AI Trading Development Plan.docx
-helper.txt
+
 
 # IDE & OS
 .vscode/
@@ -30,5 +26,4 @@ Thumbs.db
 
 # Build artifacts
 Alpha-Prime_AWS_Hackathon_Submission.pptx
-create_hackathon_ppt.py
 requirements-lock.txt
