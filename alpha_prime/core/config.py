@@ -39,11 +39,22 @@ class TradingConfig(BaseSettings):
     """Trading Parameters"""
     mode: str = Field(default="paper", alias="TRADING_MODE")  # paper or live
     max_daily_loss_pct: float = Field(default=2.0, alias="MAX_DAILY_LOSS_PCT")
-    max_position_size_pct: float = Field(default=10.0, alias="MAX_POSITION_SIZE_PCT")
-    max_open_positions: int = Field(default=5, alias="MAX_OPEN_POSITIONS")
-    default_stop_loss_pct: float = Field(default=1.5, alias="DEFAULT_STOP_LOSS_PCT")
-    default_target_pct: float = Field(default=3.0, alias="DEFAULT_TARGET_PCT")
-    capital: float = Field(default=100000.0, alias="TRADING_CAPITAL")
+    max_position_size_pct: float = Field(default=25.0, alias="MAX_POSITION_SIZE_PCT")
+    max_open_positions: int = Field(default=3, alias="MAX_OPEN_POSITIONS")
+    default_stop_loss_pct: float = Field(default=0.8, alias="DEFAULT_STOP_LOSS_PCT")
+    default_target_pct: float = Field(default=1.2, alias="DEFAULT_TARGET_PCT")
+    capital: float = Field(default=10000.0, alias="TRADING_CAPITAL")
+    # Margin/leverage multiplier (e.g., 5x means Rs.10K capital = Rs.50K buying power)
+    margin_multiplier: float = Field(default=5.0, alias="MARGIN_MULTIPLIER")
+    # Stop taking new trades once daily P&L reaches this
+    daily_profit_target_pct: float = Field(default=1.5, alias="DAILY_PROFIT_TARGET_PCT")
+    # Minimum signal strength (0-1) to consider a BUY - higher = fewer but better trades
+    min_signal_strength: float = Field(default=0.7, alias="MIN_SIGNAL_STRENGTH")
+
+    @property
+    def effective_capital(self) -> float:
+        """Capital * margin multiplier = actual buying power for intraday"""
+        return self.capital * self.margin_multiplier
 
     class Config:
         env_prefix = ""

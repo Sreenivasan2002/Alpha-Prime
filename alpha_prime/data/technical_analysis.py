@@ -45,6 +45,8 @@ class TechnicalReport:
     overall_strength: float = 0.0
     summary: str = ""
 
+    volume_confirmed: bool = False  # Whether volume supports the move
+
     def to_dict(self) -> Dict:
         return {
             "symbol": self.symbol,
@@ -52,6 +54,7 @@ class TechnicalReport:
             "trend": self.trend,
             "overall_signal": self.overall_signal,
             "overall_strength": round(self.overall_strength, 3),
+            "volume_confirmed": self.volume_confirmed,
             "support_levels": [round(s, 2) for s in self.support_levels],
             "resistance_levels": [round(r, 2) for r in self.resistance_levels],
             "signals": [
@@ -94,6 +97,7 @@ class TechnicalAnalyzer:
             self._compute_atr(df, report)
             self._compute_vwap(df, report)
             self._compute_adx(df, report)
+            self._compute_volume_confirmation(df, report)
             self._detect_candlestick_patterns(df, report)
             self._compute_support_resistance(df, report)
             self._determine_trend(df, report)
@@ -405,6 +409,91 @@ class TechnicalAnalyzer:
             description=desc
         ))
 
+    def _compute_volume_confirmation(self, df: pd.DataFrame, report: TechnicalReport):
+        """Check if volume confirms the current price move.
+        High volume on up-moves = bullish confirmation.
+        Low volume on up-moves = weak rally, likely to reverse.
+        Volume increasing trend = conviction behind the move.
+        """
+        if "Volume" not in df.columns or len(df) < 20:
+            return
+
+        try:
+            vol = df["Volume"]
+            close = df["Close"]
+
+            # Skip if volume is all zeros (some data feeds don't have volume)
+            if vol.iloc[-20:].sum() == 0:
+                return
+
+            # Current volume vs 20-period average
+            avg_volume_20 = float(vol.iloc[-20:].mean())
+            current_volume = float(vol.iloc[-1])
+
+            if avg_volume_20 <= 0:
+                return
+
+            volume_ratio = current_volume / avg_volume_20
+
+            # Check if price is moving up or down
+            price_change = float(close.iloc[-1]) - float(close.iloc[-2])
+            price_change_pct = (price_change / float(close.iloc[-2])) * 100 if float(close.iloc[-2]) > 0 else 0
+
+            # Volume trend: compare last 5 bars avg vs previous 5 bars avg
+            if len(vol) >= 10:
+                recent_vol_avg = float(vol.iloc[-5:].mean())
+                prior_vol_avg = float(vol.iloc[-10:-5].mean())
+                vol_trend_ratio = recent_vol_avg / prior_vol_avg if prior_vol_avg > 0 else 1.0
+            else:
+                vol_trend_ratio = 1.0
+
+            # Determine volume signal
+            if price_change > 0 and volume_ratio >= 1.2:
+                # Price up + above-average volume = strong bullish
+                signal = "BUY"
+                strength = min(volume_ratio / 3.0, 0.9)  # Cap at 0.9
+                desc = f"Volume confirmation: {volume_ratio:.1f}x avg volume on up-move (+{price_change_pct:.2f}%)"
+                report.volume_confirmed = True
+            elif price_change > 0 and volume_ratio < 0.7:
+                # Price up but low volume = weak rally
+                signal = "SELL"
+                strength = 0.4
+                desc = f"Volume divergence: price up but volume only {volume_ratio:.1f}x avg - weak rally"
+                report.volume_confirmed = False
+            elif price_change < 0 and volume_ratio >= 1.5:
+                # Price down + high volume = strong selling
+                signal = "SELL"
+                strength = min(volume_ratio / 3.0, 0.9)
+                desc = f"Heavy selling: {volume_ratio:.1f}x avg volume on down-move ({price_change_pct:.2f}%)"
+                report.volume_confirmed = False
+            elif price_change < 0 and volume_ratio < 0.7:
+                # Price down but low volume = not much conviction in selling
+                signal = "BUY"
+                strength = 0.3
+                desc = f"Low-volume dip: volume {volume_ratio:.1f}x avg on down-move - sellers lack conviction"
+                report.volume_confirmed = True
+            else:
+                signal = "NEUTRAL"
+                strength = 0.0
+                desc = f"Volume neutral: {volume_ratio:.1f}x avg volume"
+                report.volume_confirmed = volume_ratio >= 0.9
+
+            # Add volume trend bonus
+            if vol_trend_ratio > 1.3 and signal == "BUY":
+                strength = min(strength + 0.1, 0.9)
+                desc += f" | Volume trending up ({vol_trend_ratio:.1f}x)"
+
+            report.signals.append(TechnicalSignal(
+                indicator="VOLUME",
+                signal=signal,
+                strength=strength,
+                value=volume_ratio,
+                description=desc
+            ))
+
+        except Exception as e:
+            logger.debug(f"Volume confirmation error: {e}")
+
     def _detect_candlestick_patterns(self, df: pd.DataFrame, report: TechnicalReport):
         """Detect candlestick patterns using custom logic (no TA-Lib dependency)"""
         if len(df) < 5:
@@ -618,12 +707,14 @@ class TechnicalAnalyzer:
 
     def _compute_overall_signal(self, report: TechnicalReport):
         """Compute overall buy/sell/hold signal from all indicators.
-        For intraday, uses count-based voting: if more indicators say BUY than SELL, it's a BUY.
+        Stricter scoring: requires strong majority + trend alignment + RSI in safe zone.
+        Designed for intraday with 0.5%+ profit target.
         """
         buy_score = 0.0
         sell_score = 0.0
         buy_count = 0
         sell_count = 0
+        neutral_count = 0
 
         for signal in report.signals:
             if signal.signal == "BUY":
@@ -632,45 +723,73 @@ class TechnicalAnalyzer:
             elif signal.signal == "SELL":
                 sell_score += signal.strength
                 sell_count += 1
+            else:
+                neutral_count += 1
 
-        # Add pattern signals
+        # Add pattern signals (reduced weight - patterns alone shouldn't drive trades)
         for pattern in report.patterns:
             if pattern.signal == "BULLISH":
-                buy_score += pattern.strength * 0.5
+                buy_score += pattern.strength * 0.3
                 buy_count += 1
             elif pattern.signal == "BEARISH":
-                sell_score += pattern.strength * 0.5
+                sell_score += pattern.strength * 0.3
                 sell_count += 1
 
+        total_signals = buy_count + sell_count + neutral_count
         total_directional = buy_count + sell_count
         if total_directional == 0:
             report.overall_signal = "HOLD"
             report.overall_strength = 0.0
             return
 
-        # Count-based: if more BUY than SELL indicators, it's a BUY
-        if buy_count > sell_count:
-            report.overall_signal = "BUY"
-            # Strength based on margin of majority and avg signal strength
-            majority_ratio = buy_count / total_directional
-            avg_strength = buy_score / buy_count if buy_count > 0 else 0
-            report.overall_strength = min(majority_ratio * avg_strength * 1.5, 1.0)
-        elif sell_count > buy_count:
-            report.overall_signal = "SELL"
-            majority_ratio = sell_count / total_directional
-            avg_strength = sell_score / sell_count if sell_count > 0 else 0
-            report.overall_strength = min(majority_ratio * avg_strength * 1.5, 1.0)
-        else:
-            # Tie: use score magnitude
-            if buy_score > sell_score:
-                report.overall_signal = "BUY"
-                report.overall_strength = min((buy_score - sell_score) / max(buy_score, 1) * 1.5, 1.0)
-            elif sell_score > buy_score:
-                report.overall_signal = "SELL"
-                report.overall_strength = min((sell_score - buy_score) / max(sell_score, 1) * 1.5, 1.0)
-            else:
+        # --- STRICT VALIDATION GATES ---
+        # Gate 1: Require at least 3 BUY indicators to consider a BUY
+        min_indicators_required = 3
+        if buy_count < min_indicators_required and sell_count < min_indicators_required:
+            report.overall_signal = "HOLD"
+            report.overall_strength = 0.0
+            return
+
+        # Gate 2: Require clear majority (>60% of directional signals must agree)
+        majority_threshold = 0.60
+        buy_ratio = buy_count / total_directional
+        sell_ratio = sell_count / total_directional
+
+        # Gate 3: Trend must align (no buying in BEARISH trend, no selling in BULLISH)
+        trend = report.trend.upper() if report.trend else "NEUTRAL"
+
+        if buy_ratio >= majority_threshold and buy_count >= min_indicators_required:
+            # Penalize if trend is against the signal
+            if trend == "BEARISH":
                 report.overall_signal = "HOLD"
                 report.overall_strength = 0.0
+                return
+
+            report.overall_signal = "BUY"
+            avg_strength = buy_score / buy_count
+            # Conservative strength: majority_ratio * avg_strength (no 1.5x multiplier)
+            # Cap at 0.85 to prevent overconfidence
+            raw_strength = min(buy_ratio * avg_strength, 0.85)
+
+            # Volume confirmation penalty: reduce strength if volume doesn't confirm
+            if not report.volume_confirmed:
+                raw_strength *= 0.8  # 20% penalty for unconfirmed volume
+            report.overall_strength = raw_strength
+
+        elif sell_ratio >= majority_threshold and sell_count >= min_indicators_required:
+            if trend == "BULLISH":
+                report.overall_signal = "HOLD"
+                report.overall_strength = 0.0
+                return
+
+            report.overall_signal = "SELL"
+            avg_strength = sell_score / sell_count
+            report.overall_strength = min(sell_ratio * avg_strength, 0.85)
+
+        else:
+            # No clear majority - HOLD
+            report.overall_signal = "HOLD"
+            report.overall_strength = 0.0
 
     def _generate_summary(self, report: TechnicalReport):
         """Generate human-readable summary"""

@@ -13,6 +13,8 @@ import json
 import sys
 import os
 import traceback
+import threading
+import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
@@ -204,6 +206,123 @@ st.markdown("""
     /* Hide streamlit branding */
     footer { display: none !important; }
     #MainMenu { visibility: hidden; }
+
+    /* Top Movers styling */
+    .mover-card {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        border: 1px solid #2d3748;
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin: 4px 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .mover-symbol {
+        font-weight: 700;
+        font-size: 1rem;
+        color: #e2e8f0;
+    }
+    .mover-price {
+        font-size: 0.95rem;
+        color: #94a3b8;
+    }
+    .mover-change-up {
+        color: #34d399;
+        font-weight: 700;
+        font-size: 0.95rem;
+    }
+    .mover-change-down {
+        color: #f87171;
+        font-weight: 700;
+        font-size: 0.95rem;
+    }
+    .mover-rank {
+        color: #64748b;
+        font-size: 0.8rem;
+        font-weight: 600;
+        min-width: 24px;
+    }
+
+    /* Live Activity Feed */
+    .activity-feed {
+        max-height: 600px;
+        overflow-y: auto;
+        padding: 8px;
+        background: #0a0e17;
+        border-radius: 10px;
+        border: 1px solid #1e293b;
+    }
+    .activity-item {
+        padding: 8px 12px;
+        margin: 4px 0;
+        border-radius: 8px;
+        font-size: 0.82rem;
+        line-height: 1.5;
+        border-left: 4px solid transparent;
+        animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    .activity-scanner {
+        background: rgba(96,165,250,0.08);
+        border-left-color: #60a5fa;
+    }
+    .activity-analyst {
+        background: rgba(167,139,250,0.08);
+        border-left-color: #a78bfa;
+    }
+    .activity-risk {
+        background: rgba(251,191,36,0.08);
+        border-left-color: #fbbf24;
+    }
+    .activity-execution {
+        background: rgba(52,211,153,0.08);
+        border-left-color: #34d399;
+    }
+    .activity-portfolio {
+        background: rgba(244,114,182,0.08);
+        border-left-color: #f472b6;
+    }
+    .activity-tool {
+        background: rgba(100,116,139,0.05);
+        border-left-color: #475569;
+    }
+    .activity-error {
+        background: rgba(248,113,113,0.1);
+        border-left-color: #f87171;
+    }
+    .activity-success {
+        background: rgba(52,211,153,0.1);
+        border-left-color: #34d399;
+    }
+
+    /* Pipeline progress */
+    .pipeline-step {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin: 4px;
+    }
+    .step-active {
+        background: linear-gradient(135deg, #1e40af, #3b82f6);
+        color: white;
+        box-shadow: 0 0 12px rgba(59,130,246,0.4);
+    }
+    .step-done {
+        background: #064e3b;
+        color: #34d399;
+    }
+    .step-pending {
+        background: #1e293b;
+        color: #64748b;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -285,7 +404,7 @@ def render_sidebar():
 
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("Update Keys", use_container_width=True, type="primary"):
+            if st.button("Update Keys", width="stretch", type="primary"):
                 try:
                     settings.update_groww_keys(new_api_key, new_secret)
                     reset_broker()
@@ -294,7 +413,7 @@ def render_sidebar():
                 except Exception as e:
                     st.error(f"Save failed: {e}")
         with col2:
-            if st.button("Test Connection", use_container_width=True):
+            if st.button("Test Connection", width="stretch"):
                 with st.spinner("Connecting to Groww..."):
                     try:
                         # Save keys first, then test
@@ -337,7 +456,7 @@ def render_sidebar():
         model = st.selectbox("Model", ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo"],
                            index=["gpt-4o-mini", "gpt-4o", "gpt-4-turbo"].index(settings.openai.model)
                            if settings.openai.model in ["gpt-4o-mini", "gpt-4o", "gpt-4-turbo"] else 0)
-        if st.button("Save OpenAI Settings", use_container_width=True):
+        if st.button("Save OpenAI Settings", width="stretch"):
             try:
                 settings.update_openai_settings(openai_key, model)
                 st.success("OpenAI settings saved!")
@@ -350,7 +469,12 @@ def render_sidebar():
         mode = st.radio("Select Mode", ["Paper", "Live"],
                        index=0 if settings.trading.mode == "paper" else 1,
                        horizontal=True)
-        settings.trading.mode = "paper" if mode == "Paper" else "live"
+        new_mode = "paper" if mode == "Paper" else "live"
+        if new_mode != settings.trading.mode:
+            settings.trading.mode = new_mode
+            reset_broker()  # ensure next get_broker() uses the selected mode
+        else:
+            settings.trading.mode = new_mode
 
         # ---- Scheduler ----
         st.markdown("---")
@@ -360,22 +484,22 @@ def render_sidebar():
         with col1:
             start_disabled = trading_scheduler.is_running()
             if st.button("Start" if not start_disabled else "Running",
-                        disabled=start_disabled, use_container_width=True, type="primary"):
+                        disabled=start_disabled, width="stretch", type="primary"):
                 trading_scheduler.start()
                 st.rerun()
         with col2:
             if st.button("Stop", disabled=not trading_scheduler.is_running(),
-                        use_container_width=True):
+                        width="stretch"):
                 trading_scheduler.stop()
                 st.rerun()
 
-        if st.button("Run Pipeline NOW", use_container_width=True,
+        if st.button("Run Pipeline NOW", width="stretch",
                     type="secondary", help="Manually trigger one trading cycle"):
             with st.spinner("Running AI trading pipeline..."):
                 trading_scheduler.run_now()
             st.success("Pipeline triggered!")
 
-        if st.button("Square Off ALL Positions", use_container_width=True,
+        if st.button("Square Off ALL Positions", width="stretch",
                     help="Sell all intraday positions immediately"):
             with st.spinner("Squaring off all positions..."):
                 trading_scheduler._auto_square_off()
@@ -477,7 +601,7 @@ def render_portfolio_tab():
                 font=dict(color="#94a3b8"),
                 showlegend=False
             )
-            st.plotly_chart(fig, use_container_width=True)
+            st.plotly_chart(fig, width="stretch")
         else:
             st.info("No portfolio history yet. Run a trading cycle to see data.")
 
@@ -496,7 +620,7 @@ def render_portfolio_tab():
                     "P&L": f"{pnl_val:+.2f}",
                     "P&L%": f"{d.get('pnl_pct', 0):+.1f}%"
                 })
-            st.dataframe(pd.DataFrame(pos_rows), use_container_width=True,
+            st.dataframe(pd.DataFrame(pos_rows), width="stretch",
                         hide_index=True, height=300)
         else:
             st.info("No intraday positions")
@@ -518,7 +642,7 @@ def render_portfolio_tab():
                 "P&L": f"Rs {pnl_val:+,.0f}",
                 "P&L%": f"{h.get('pnl_pct', 0):+.1f}%"
             })
-        st.dataframe(pd.DataFrame(h_rows), use_container_width=True,
+        st.dataframe(pd.DataFrame(h_rows), width="stretch",
                     hide_index=True, height=250)
 
     # Position Monitor Status
@@ -540,9 +664,124 @@ def render_portfolio_tab():
                 "P&L": f"{pnl:+.2f}",
                 "P&L%": f"{pnl_pct:+.1f}%",
             })
-        st.dataframe(pd.DataFrame(mon_rows), use_container_width=True,
+        st.dataframe(pd.DataFrame(mon_rows), width="stretch",
                     hide_index=True, height=200)
         st.caption("Positions are auto-sold when price drops below Trail SL or reaches Target. Auto square-off at 3:15 PM.")
+
+    # ---- Risk-Adjusted Performance Metrics (Sharpe Ratio & Max Drawdown) ----
+    st.markdown("##### Risk-Adjusted Performance")
+    try:
+        trades_for_metrics = get_trades(limit=500, trading_mode=settings.trading.mode)
+        if trades_for_metrics and len(trades_for_metrics) >= 2:
+            # Calculate per-trade returns
+            trade_returns = []
+            for t in trades_for_metrics:
+                if t.get("action") == "SELL" and t.get("pnl") is not None:
+                    entry_val = t.get("price", 0) * t.get("quantity", 0)
+                    if entry_val > 0:
+                        ret = t["pnl"] / entry_val
+                        trade_returns.append(ret)
+
+            # Also compute from portfolio history for equity curve
+            history = get_portfolio_history(limit=500)
+
+            if trade_returns and len(trade_returns) >= 2:
+                import numpy as np_metrics
+                returns_arr = np_metrics.array(trade_returns)
+
+                # Sharpe Ratio (annualized, assuming ~250 trading days, ~5 trades/day avg)
+                avg_return = np_metrics.mean(returns_arr)
+                std_return = np_metrics.std(returns_arr, ddof=1)
+                # Risk-free rate: ~7% annually for India (RBI repo rate) -> per trade ~0.028%
+                risk_free_per_trade = 0.07 / (250 * 5)  # rough approximation
+                sharpe = ((avg_return - risk_free_per_trade) / std_return * np_metrics.sqrt(250 * 5)
+                         if std_return > 0 else 0)
+
+                # Win Rate
+                wins = sum(1 for r in returns_arr if r > 0)
+                win_rate = wins / len(returns_arr) * 100
+
+                # Average Win / Average Loss
+                win_returns = [r for r in returns_arr if r > 0]
+                loss_returns = [r for r in returns_arr if r < 0]
+                avg_win = np_metrics.mean(win_returns) * 100 if win_returns else 0
+                avg_loss = np_metrics.mean(loss_returns) * 100 if loss_returns else 0
+
+                # Profit Factor
+                gross_profit = sum(r for r in returns_arr if r > 0)
+                gross_loss = abs(sum(r for r in returns_arr if r < 0))
+                profit_factor = gross_profit / gross_loss if gross_loss > 0 else float('inf')
+
+                # Max Drawdown from equity curve (portfolio history)
+                max_drawdown_pct = 0.0
+                if history and len(history) >= 2:
+                    values = [h.get("total_value", 0) for h in reversed(history) if h.get("total_value", 0) > 0]
+                    if values:
+                        peak = values[0]
+                        for v in values:
+                            if v > peak:
+                                peak = v
+                            dd = (peak - v) / peak * 100 if peak > 0 else 0
+                            if dd > max_drawdown_pct:
+                                max_drawdown_pct = dd
+
+                # Display metrics
+                mc1, mc2, mc3, mc4, mc5, mc6 = st.columns(6)
+                with mc1:
+                    sharpe_color = "normal" if sharpe >= 1 else "off"
+                    st.metric("Sharpe Ratio", f"{sharpe:.2f}",
+                             help="Risk-adjusted return. >1 = good, >2 = excellent")
+                with mc2:
+                    st.metric("Win Rate", f"{win_rate:.0f}%",
+                             help="Percentage of profitable trades")
+                with mc3:
+                    st.metric("Profit Factor", f"{profit_factor:.2f}" if profit_factor < 100 else "INF",
+                             help="Gross profit / Gross loss. >1.5 = good")
+                with mc4:
+                    st.metric("Avg Win", f"+{avg_win:.2f}%",
+                             help="Average return on winning trades")
+                with mc5:
+                    st.metric("Avg Loss", f"{avg_loss:.2f}%",
+                             help="Average return on losing trades")
+                with mc6:
+                    st.metric("Max Drawdown", f"-{max_drawdown_pct:.2f}%",
+                             help="Largest peak-to-trough decline")
+
+                # Equity curve with drawdown overlay
+                if history and len(history) >= 3:
+                    hist_df2 = pd.DataFrame(reversed(history))
+                    hist_df2["timestamp"] = pd.to_datetime(hist_df2["timestamp"])
+                    values_series = hist_df2["total_value"]
+                    peak_series = values_series.cummax()
+                    drawdown_series = ((peak_series - values_series) / peak_series * 100).fillna(0)
+
+                    fig_dd = go.Figure()
+                    fig_dd.add_trace(go.Scatter(
+                        x=hist_df2["timestamp"], y=drawdown_series,
+                        mode="lines", name="Drawdown %",
+                        line=dict(color="#f87171", width=1.5),
+                        fill="tozeroy", fillcolor="rgba(248, 113, 113, 0.15)"
+                    ))
+                    fig_dd.update_layout(
+                        height=200,
+                        margin=dict(l=10, r=10, t=5, b=25),
+                        paper_bgcolor="rgba(0,0,0,0)",
+                        plot_bgcolor="rgba(0,0,0,0)",
+                        xaxis=dict(gridcolor="rgba(255,255,255,0.06)", showgrid=True),
+                        yaxis=dict(gridcolor="rgba(255,255,255,0.06)", showgrid=True,
+                                  title="Drawdown %", autorange="reversed"),
+                        font=dict(color="#94a3b8", size=10),
+                        showlegend=False
+                    )
+                    st.plotly_chart(fig_dd, width="stretch")
+            else:
+                st.info("Not enough completed trades to calculate risk metrics. Complete at least 2 sell trades.")
+        else:
+            st.info("No trade history available. Run trading cycles to see risk-adjusted performance metrics.")
+    except Exception as e:
+        st.warning(f"Could not compute risk metrics: {e}")
+
+    st.markdown("")  # spacer
 
     # Show Groww account details if live mode
     if settings.trading.mode == "live":
@@ -570,14 +809,14 @@ def render_portfolio_tab():
 
 
 def render_trades_tab():
-    """Trade History"""
-    trades = get_trades(limit=200)
+    """Trade History (filtered by current mode: paper or live)"""
+    trades = get_trades(limit=200, trading_mode=settings.trading.mode)
     if trades:
         df = pd.DataFrame(trades)
         cols = ["timestamp", "symbol", "action", "quantity", "price",
                "order_type", "status", "rationale", "agent_name", "order_id"]
         available = [c for c in cols if c in df.columns]
-        st.dataframe(df[available], use_container_width=True, hide_index=True, height=500)
+        st.dataframe(df[available], width="stretch", hide_index=True, height=500)
     else:
         st.info("No trades executed yet. Start the scheduler or run a manual cycle.")
 
@@ -591,7 +830,7 @@ def render_signals_tab():
         available = [c for c in cols if c in df.columns]
 
         # Color code signal types
-        st.dataframe(df[available], use_container_width=True, hide_index=True, height=500)
+        st.dataframe(df[available], width="stretch", hide_index=True, height=500)
     else:
         st.info("No signals generated yet.")
 
@@ -605,7 +844,7 @@ def render_analysis_tab():
         symbol = st.text_input("Stock Symbol", value="RELIANCE",
                               placeholder="e.g., RELIANCE, TCS, INFY").upper().strip()
         period = st.selectbox("Period", ["1mo", "3mo", "6mo", "1y"], index=1)
-        analyze_btn = st.button("Run Analysis", type="primary", use_container_width=True)
+        analyze_btn = st.button("Run Analysis", type="primary", width="stretch")
 
     if analyze_btn and symbol:
         with st.spinner(f"Analyzing {symbol}..."):
@@ -657,7 +896,7 @@ def render_analysis_tab():
                             showlegend=False,
                             margin=dict(l=10, r=10, t=10, b=30),
                         )
-                        st.plotly_chart(fig, use_container_width=True)
+                        st.plotly_chart(fig, width="stretch")
 
                     # Indicators table below
                     st.markdown("---")
@@ -710,7 +949,7 @@ def render_agent_logs_tab():
             "execution_agent", "portfolio_manager", "scheduler", "broker", "pipeline"
         ])
         log_limit = st.slider("Show last", 20, 500, 100, 20)
-        if st.button("Refresh Logs", use_container_width=True):
+        if st.button("Refresh Logs", width="stretch"):
             st.rerun()
 
     with col_logs:
@@ -761,14 +1000,14 @@ def render_watchlist_tab():
         new_sym = st.text_input("Symbol", placeholder="RELIANCE").upper().strip()
         new_sector = st.text_input("Sector", placeholder="Oil & Gas")
         new_notes = st.text_input("Notes", placeholder="Reason")
-        if st.button("Add", use_container_width=True, type="primary"):
+        if st.button("Add", width="stretch", type="primary"):
             if new_sym:
                 add_to_watchlist(clean_symbol(new_sym), new_sector, new_notes)
                 st.success(f"Added {new_sym}")
                 st.rerun()
 
         st.markdown("---")
-        if st.button("Add Top NIFTY 50", use_container_width=True):
+        if st.button("Add Top NIFTY 50", width="stretch"):
             for sym in market_data.get_nifty50_stocks()[:10]:
                 add_to_watchlist(sym, "NIFTY 50", "Auto-added")
             st.success("Added top 10 NIFTY 50 stocks")
@@ -791,7 +1030,7 @@ def render_watchlist_tab():
                     "Sector": w.get("sector", ""),
                     "Notes": w.get("notes", ""),
                 })
-            st.dataframe(pd.DataFrame(rows), use_container_width=True,
+            st.dataframe(pd.DataFrame(rows), width="stretch",
                         hide_index=True, height=400)
 
             remove_sym = st.selectbox("Remove symbol", ["(select)"] + symbols)
@@ -802,28 +1041,491 @@ def render_watchlist_tab():
             st.info("Watchlist empty. Add stocks above.")
 
 
+def render_top_movers_tab():
+    """Top Movers - shows top gainers/losers across multiple indices with Run Pipeline button"""
+
+    # Index selector and view mode
+    col_index, col_view, _ = st.columns([2, 1, 2])
+    with col_index:
+        selected_index = st.selectbox(
+            "Select Index",
+            ["NIFTY 50", "NIFTY 100", "NIFTY 500", "NIFTY Midcap 100",
+             "NIFTY Smallcap 100", "Nifty Total Market"],
+            key="index_selector"
+        )
+    with col_view:
+        view_mode = st.radio("View", ["Gainers", "Losers"], horizontal=True, key="movers_view")
+
+    st.markdown(f"##### Top Movers Today ({selected_index})")
+
+    # Fetch data for selected index stocks
+    index_stocks = market_data.get_index_stocks(selected_index)
+    stock_count = len(index_stocks)
+
+    with st.spinner(f"Fetching live prices for {stock_count} {selected_index} stocks..."):
+        movers_data = []
+
+        # Use yfinance to get OHLC data (open + current price for % change)
+        import yfinance as yf
+
+        # For large indices, fetch in batches to avoid yfinance overload
+        batch_size = 50
+        for batch_start in range(0, len(index_stocks), batch_size):
+            batch = index_stocks[batch_start:batch_start + batch_size]
+            symbols_ns = [f"{s}.NS" for s in batch]
+
+            try:
+                tickers = yf.Tickers(" ".join(symbols_ns))
+                for sym, sym_ns in zip(batch, symbols_ns):
+                    try:
+                        info = tickers.tickers[sym_ns].fast_info
+                        last_price = getattr(info, 'last_price', 0) or 0
+                        open_price = getattr(info, 'open', 0) or 0
+                        prev_close = getattr(info, 'previous_close', 0) or 0
+
+                        if prev_close > 0 and last_price > 0:
+                            change = last_price - prev_close
+                            change_pct = (change / prev_close) * 100
+                            movers_data.append({
+                                "symbol": sym,
+                                "price": last_price,
+                                "change": change,
+                                "change_pct": change_pct,
+                                "open": open_price,
+                                "prev_close": prev_close,
+                                "volume": getattr(info, 'last_volume', 0) or 0
+                            })
+                    except Exception:
+                        pass
+            except Exception as e:
+                st.warning(f"Error fetching batch starting at {batch_start}: {e}")
+
+    if not movers_data:
+        st.warning(f"Could not fetch market data for {selected_index}. Market may be closed or data unavailable.")
+        return
+
+    st.caption(f"Showing top 10 of {len(movers_data)} stocks fetched from {stock_count} in {selected_index}")
+
+    # Sort by change_pct
+    if view_mode == "Gainers":
+        movers_data.sort(key=lambda x: x["change_pct"], reverse=True)
+    else:
+        movers_data.sort(key=lambda x: x["change_pct"])
+
+    top_10 = movers_data[:10]
+
+    # Display as a table with nice formatting
+    col_table, col_action = st.columns([3, 1])
+
+    with col_table:
+        rows = []
+        for i, m in enumerate(top_10):
+            change_str = f"+{m['change']:.2f}" if m['change'] >= 0 else f"{m['change']:.2f}"
+            pct_str = f"+{m['change_pct']:.2f}%" if m['change_pct'] >= 0 else f"{m['change_pct']:.2f}%"
+            vol_str = f"{m['volume']:,.0f}" if m['volume'] else "N/A"
+            rows.append({
+                "#": i + 1,
+                "Symbol": m["symbol"],
+                "Price": f"{m['price']:.2f}",
+                "Change": change_str,
+                "Change %": pct_str,
+                "Open": f"{m['open']:.2f}",
+                "Prev Close": f"{m['prev_close']:.2f}",
+                "Volume": vol_str,
+            })
+
+        df = pd.DataFrame(rows)
+
+        # Color the dataframe
+        def color_change(val):
+            if isinstance(val, str):
+                if val.startswith("+"):
+                    return "color: #34d399; font-weight: 700"
+                elif val.startswith("-"):
+                    return "color: #f87171; font-weight: 700"
+            return ""
+
+        styled = df.style.map(color_change, subset=["Change", "Change %"])
+        st.dataframe(styled, width="stretch", hide_index=True, height=420)
+
+    with col_action:
+        st.markdown("##### Quick Actions")
+        st.markdown("")
+
+        # Store top movers in session state for pipeline use
+        st.session_state["top_movers"] = top_10
+
+        selected_stocks = st.multiselect(
+            "Select stocks to trade",
+            [m["symbol"] for m in top_10],
+            default=[m["symbol"] for m in top_10[:3]],
+            key="movers_select"
+        )
+
+        st.markdown("")
+
+        if st.button("Run Pipeline on Selected", type="primary", width="stretch",
+                     help="Run AI trading pipeline focused on selected top movers"):
+            if selected_stocks:
+                st.session_state["pipeline_running"] = True
+                st.session_state["pipeline_stocks"] = selected_stocks
+                _run_pipeline_on_movers(selected_stocks)
+            else:
+                st.warning("Select at least one stock")
+
+        st.markdown("")
+        st.markdown("---")
+        st.markdown("")
+
+        def _trigger_analyze():
+            sel = st.session_state.get("movers_select", [])
+            if sel:
+                st.session_state["run_analysis_stocks"] = list(sel)
+            else:
+                st.session_state["analysis_no_selection"] = True
+
+        if st.button("Analyze Selected", width="stretch",
+                     help="Run technical analysis on selected stocks",
+                     key="btn_analyze_selected",
+                     on_click=_trigger_analyze):
+            pass  # Callback handles it
+
+        if st.session_state.pop("analysis_no_selection", False):
+            st.warning("Select at least one stock")
+
+    # Run analysis if triggered (outside columns so spinner + result render full-width)
+    if "run_analysis_stocks" in st.session_state and st.session_state["run_analysis_stocks"]:
+        analysis_stocks = st.session_state.pop("run_analysis_stocks")
+        st.markdown("---")
+        st.markdown(f"##### Analyzing: {', '.join(analysis_stocks)}")
+        with st.spinner(f"Running AI technical analysis on {', '.join(analysis_stocks)}... This may take 1-2 minutes."):
+            try:
+                from alpha_prime.agents.pipeline import run_analysis
+                result = run_analysis(analysis_stocks)
+                st.session_state["analysis_result"] = result
+            except Exception as e:
+                st.error(f"Analysis failed: {e}")
+                st.session_state["analysis_result"] = None
+
+    # Show analysis result if available
+    analysis_result = st.session_state.get("analysis_result")
+    if analysis_result is not None:
+        st.markdown("---")
+        with st.expander("Analysis Result", expanded=True):
+            if analysis_result:
+                st.markdown(analysis_result)
+            else:
+                st.info("Analysis completed but returned no content. Check OpenAI API key and try again.")
+            if st.button("Clear Analysis", key="clear_analysis"):
+                st.session_state["analysis_result"] = None
+                st.rerun()
+
+
+def _run_pipeline_on_movers(stocks: list):
+    """Run the full pipeline focused on specific top mover stocks"""
+    from alpha_prime.agents.pipeline import (
+        get_llm, run_agent_node, create_initial_state,
+        TradingState, get_scanner_prompt, get_analyst_prompt,
+        get_risk_manager_prompt, get_execution_prompt
+    )
+    from alpha_prime.agents.tools import (
+        MARKET_ANALYSIS_TOOLS, TRADING_TOOLS, SIGNAL_TOOLS
+    )
+    from alpha_prime.core.database import log_agent_activity
+
+    symbols_str = ", ".join(stocks)
+    progress = st.progress(0, text="Starting pipeline...")
+    status_container = st.container()
+
+    state = create_initial_state()
+
+    # Phase 1: Scanner (but focused on selected stocks)
+    with status_container:
+        st.markdown(_pipeline_status_html("scanner"), unsafe_allow_html=True)
+    progress.progress(10, text="Phase 1: Scanning selected stocks...")
+
+    scanner_prompt = get_scanner_prompt()
+    scanner_msg = f"""The user has selected these TOP MOVERS to trade: {symbols_str}
+
+Execute these steps:
+1. Call check_market_status
+2. Call get_multiple_stock_prices with "{','.join(stocks)}"
+3. Call run_intraday_analysis on each stock
+4. ALL of these stocks are pre-selected by the user as top movers. Output them as BUY candidates with analysis."""
+
+    scanner_output = run_agent_node(
+        state, scanner_prompt, scanner_msg,
+        MARKET_ANALYSIS_TOOLS + SIGNAL_TOOLS,
+        "market_scanner", max_iterations=15
+    )
+    state["scanner_output"] = scanner_output
+    progress.progress(30, text="Phase 1 complete. Starting analysis...")
+
+    # Phase 2: Analyst
+    with status_container:
+        st.markdown(_pipeline_status_html("analyst"), unsafe_allow_html=True)
+    progress.progress(35, text="Phase 2: Deep technical analysis...")
+
+    analyst_prompt = get_analyst_prompt()
+    analyst_msg = f"""The scanner identified these TOP MOVERS selected by the user:
+
+{scanner_output}
+
+For EACH stock:
+1. Run both daily and intraday analysis
+2. Compute exact entry, stop-loss, target
+3. Rate signal strength
+4. Save signals using save_signal tool"""
+
+    analyst_output = run_agent_node(
+        state, analyst_prompt, analyst_msg,
+        MARKET_ANALYSIS_TOOLS + SIGNAL_TOOLS,
+        "technical_analyst", max_iterations=15
+    )
+    state["analyst_output"] = analyst_output
+    progress.progress(55, text="Phase 2 complete. Risk check...")
+
+    # Phase 3: Risk Manager
+    with status_container:
+        st.markdown(_pipeline_status_html("risk"), unsafe_allow_html=True)
+    progress.progress(60, text="Phase 3: Risk validation & position sizing...")
+
+    risk_prompt = get_risk_manager_prompt()
+    risk_msg = f"""Review these trade proposals from analysis:
+
+{analyst_output}
+
+Check risk rules and APPROVE each valid trade with position size."""
+
+    risk_tools = MARKET_ANALYSIS_TOOLS + [
+        t for t in TRADING_TOOLS if t.name != "place_trade"
+    ] + SIGNAL_TOOLS
+    risk_output = run_agent_node(
+        state, risk_prompt, risk_msg,
+        risk_tools, "risk_manager", max_iterations=10
+    )
+    state["risk_output"] = risk_output
+    progress.progress(80, text="Phase 3 complete. Executing trades...")
+
+    # Phase 4: Executor
+    with status_container:
+        st.markdown(_pipeline_status_html("execution"), unsafe_allow_html=True)
+    progress.progress(85, text="Phase 4: Placing orders via Groww...")
+
+    from alpha_prime.agents.prompts import get_execution_prompt
+    exec_prompt = get_execution_prompt()
+    exec_msg = f"""Risk Manager approved trades:
+
+{risk_output}
+
+EXECUTE every APPROVED trade using place_trade. Do NOT skip any."""
+
+    exec_output = run_agent_node(
+        state, exec_prompt, exec_msg,
+        TRADING_TOOLS + MARKET_ANALYSIS_TOOLS,
+        "execution_agent", max_iterations=10
+    )
+    state["execution_output"] = exec_output
+    progress.progress(100, text="Pipeline complete!")
+
+    st.session_state["pipeline_running"] = False
+
+    # Show results
+    st.success("Pipeline completed!")
+    with st.expander("Scanner Output", expanded=False):
+        st.markdown(scanner_output)
+    with st.expander("Analyst Output", expanded=False):
+        st.markdown(analyst_output)
+    with st.expander("Risk Manager Output", expanded=False):
+        st.markdown(risk_output)
+    with st.expander("Execution Output", expanded=True):
+        st.markdown(exec_output)
+
+
+def _pipeline_status_html(active_phase: str) -> str:
+    """Generate pipeline progress bar HTML"""
+    phases = [
+        ("scanner", "Scanner", "Scanning stocks"),
+        ("analyst", "Analyst", "Technical analysis"),
+        ("risk", "Risk Mgr", "Risk validation"),
+        ("execution", "Executor", "Placing trades"),
+    ]
+    phase_order = [p[0] for p in phases]
+    active_idx = phase_order.index(active_phase) if active_phase in phase_order else -1
+
+    html = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;">'
+    for i, (key, label, desc) in enumerate(phases):
+        if i < active_idx:
+            css = "step-done"
+            icon = "&#10003;"
+        elif i == active_idx:
+            css = "step-active"
+            icon = "&#9654;"
+        else:
+            css = "step-pending"
+            icon = "&#9679;"
+        html += f'<span class="pipeline-step {css}">{icon} {label}</span>'
+
+    # Arrow connectors
+    html += '</div>'
+    return html
+
+
+def render_live_activity_tab():
+    """Live Pipeline Activity - shows real-time agent-to-agent communication"""
+    st.markdown("##### Live Pipeline Activity")
+    st.caption("Shows real-time agent activity, tool calls, and decisions during pipeline execution")
+
+    col_filter, col_refresh = st.columns([3, 1])
+    with col_filter:
+        show_tools = st.checkbox("Show tool calls", value=True, key="show_tools_activity")
+        show_limit = st.slider("Show last N entries", 20, 500, 100, 10, key="activity_limit")
+    with col_refresh:
+        if st.button("Refresh", width="stretch", key="refresh_activity"):
+            st.rerun()
+
+    # Fetch recent agent logs
+    logs = get_agent_logs(limit=show_limit)
+
+    if not logs:
+        st.info("No pipeline activity yet. Run a trading cycle to see live agent activity here.")
+        return
+
+    # Pipeline progress indicator (from latest logs)
+    latest_agents = set()
+    for log in logs[:50]:
+        agent = log.get("agent_name", "")
+        if log.get("log_type") == "complete":
+            latest_agents.add(agent)
+
+    # Render activity feed
+    agent_css_map = {
+        "market_scanner": ("activity-scanner", "SCANNER", "#60a5fa"),
+        "technical_analyst": ("activity-analyst", "ANALYST", "#a78bfa"),
+        "risk_manager": ("activity-risk", "RISK MGR", "#fbbf24"),
+        "execution_agent": ("activity-execution", "EXECUTOR", "#34d399"),
+        "portfolio_manager": ("activity-portfolio", "REVIEW", "#f472b6"),
+        "pipeline": ("activity-success", "PIPELINE", "#34d399"),
+        "scheduler": ("activity-tool", "SCHEDULER", "#64748b"),
+        "broker": ("activity-tool", "BROKER", "#64748b"),
+    }
+
+    html = '<div class="activity-feed">'
+
+    for log in logs:
+        agent = log.get("agent_name", "unknown")
+        log_type = log.get("log_type", "")
+        message = log.get("message", "")
+        ts = log.get("timestamp", "")
+        details = log.get("details_json", "")
+
+        # Skip tool calls if unchecked
+        if not show_tools and log_type == "tool_call":
+            continue
+
+        css_class, agent_label, agent_color = agent_css_map.get(
+            agent, ("activity-tool", agent.upper(), "#64748b")
+        )
+
+        if log_type == "error":
+            css_class = "activity-error"
+
+        # Time
+        time_str = ts[-8:] if len(ts) >= 8 else ts
+
+        # Icon based on type
+        icons = {
+            "start": "&#9654;",      # play
+            "tool_call": "&#128295;",  # wrench
+            "complete": "&#10003;",    # check
+            "error": "&#10007;",       # cross
+            "trade": "&#128176;",      # money
+        }
+        icon = icons.get(log_type, "&#9679;")
+
+        # Parse tool details
+        detail_html = ""
+        if log_type == "tool_call" and details:
+            try:
+                d = json.loads(details) if isinstance(details, str) else details
+                if isinstance(d, dict):
+                    tool_args = ", ".join(f"{k}={v}" for k, v in list(d.items())[:3])
+                    detail_html = f'<br><span style="color:#475569;font-size:0.75rem;font-family:monospace;">  args: {tool_args}</span>'
+            except Exception:
+                pass
+
+        html += (
+            f'<div class="activity-item {css_class}">'
+            f'<span style="color:#475569;font-size:0.75rem;">{time_str}</span> '
+            f'{icon} '
+            f'<span style="color:{agent_color};font-weight:700;font-size:0.8rem;">[{agent_label}]</span> '
+            f'<span style="color:#94a3b8;font-size:0.78rem;">{log_type}</span> '
+            f'<span style="color:#cbd5e1;font-size:0.82rem;">{message}</span>'
+            f'{detail_html}'
+            f'</div>'
+        )
+
+    html += '</div>'
+    st.markdown(html, unsafe_allow_html=True)
+
+    # Stats summary
+    st.markdown("---")
+    st.markdown("##### Activity Summary")
+    agent_counts = {}
+    tool_counts = {}
+    error_count = 0
+    for log in logs:
+        agent = log.get("agent_name", "unknown")
+        agent_counts[agent] = agent_counts.get(agent, 0) + 1
+        if log.get("log_type") == "tool_call":
+            msg = log.get("message", "")
+            tool_name = msg.replace("Calling ", "").split("(")[0].strip() if "Calling" in msg else msg
+            tool_counts[tool_name] = tool_counts.get(tool_name, 0) + 1
+        if log.get("log_type") == "error":
+            error_count += 1
+
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.markdown("**Agent Activity**")
+        for agent, count in sorted(agent_counts.items(), key=lambda x: -x[1]):
+            _, label, color = agent_css_map.get(agent, ("", agent, "#64748b"))
+            st.markdown(f'<span style="color:{color};font-weight:600;">{label}</span>: {count} events',
+                       unsafe_allow_html=True)
+    with col2:
+        st.markdown("**Tool Calls**")
+        for tool_name, count in sorted(tool_counts.items(), key=lambda x: -x[1])[:8]:
+            st.markdown(f"`{tool_name}`: {count} calls")
+    with col3:
+        st.metric("Total Events", len(logs))
+        st.metric("Errors", error_count, delta_color="inverse")
+
+
 def main():
     """Main app"""
     init_database()
     render_header()
     render_sidebar()
 
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-        "Portfolio", "Trades", "Signals",
-        "Analysis", "Agent Logs", "Watchlist"
+    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+        "Portfolio", "Top Movers", "Live Activity",
+        "Trades", "Signals", "Analysis", "Agent Logs", "Watchlist"
     ])
 
     with tab1:
         render_portfolio_tab()
     with tab2:
-        render_trades_tab()
+        render_top_movers_tab()
     with tab3:
-        render_signals_tab()
+        render_live_activity_tab()
     with tab4:
-        render_analysis_tab()
+        render_trades_tab()
     with tab5:
-        render_agent_logs_tab()
+        render_signals_tab()
     with tab6:
+        render_analysis_tab()
+    with tab7:
+        render_agent_logs_tab()
+    with tab8:
         render_watchlist_tab()
 
     # Auto-refresh every 30 seconds

@@ -172,7 +172,7 @@ class MarketDataEngine:
             "RELIANCE", "TCS", "HDFCBANK", "INFY", "ICICIBANK",
             "HINDUNILVR", "ITC", "SBIN", "BHARTIARTL", "KOTAKBANK",
             "LT", "AXISBANK", "BAJFINANCE", "MARUTI", "HCLTECH",
-            "ASIANPAINT", "TATAMOTORS", "SUNPHARMA", "TITAN", "WIPRO",
+            "ASIANPAINT", "SUNPHARMA", "TITAN", "WIPRO", "TMPV",
             "ULTRACEMCO", "NESTLEIND", "POWERGRID", "NTPC", "M&M",
             "ONGC", "JSWSTEEL", "TATASTEEL", "ADANIENT", "ADANIPORTS",
             "TECHM", "BAJAJFINSV", "HDFCLIFE", "DIVISLAB", "DRREDDY",
@@ -188,6 +188,123 @@ class MarketDataEngine:
             "INDUSINDBK", "BANDHANBNK", "FEDERALBNK", "IDFCFIRSTB",
             "PNB", "AUBANK", "BANKBARODA"
         ]
+
+    def get_nifty100_stocks(self) -> List[str]:
+        """Get list of NIFTY 100 constituent stocks (NIFTY 50 + NIFTY Next 50)"""
+        nifty50 = self.get_nifty50_stocks()
+        next50 = [
+            "ABB", "ADANIGREEN", "ADANIPOWER", "AMBUJACEM", "AUROPHARMA",
+            "BAJAJHLDNG", "BANKBARODA", "BEL", "BERGEPAINT", "BOSCHLTD",
+            "CANBK", "CHOLAFIN", "COLPAL", "DLF", "DABUR",
+            "GAIL", "GODREJCP", "HAVELLS", "ICICIPRULI", "INDHOTEL",
+            "IOC", "IRCTC", "IRFC", "JIOFIN", "JSL",
+            "LICI", "LUPIN", "MARICO", "MOTHERSON", "NAUKRI",
+            "NHPC", "PFC", "PIDILITIND", "PNB", "POLYCAB",
+            "RECLTD", "SBICARD", "SHREECEM", "SIEMENS", "SRF",
+            "TATAPOWER", "TORNTPHARM", "TRENT", "UNITDSPR", "VEDL",
+            "VBL", "YESBANK", "ZOMATO", "ZYDUSLIFE", "HAL"
+        ]
+        return nifty50 + next50
+
+    def get_nifty500_stocks(self) -> List[str]:
+        """Get a representative list of NIFTY 500 stocks (top ~200 by market cap)
+        Full NIFTY 500 has 500 stocks - we fetch top 200 to keep response time reasonable."""
+        nifty100 = self.get_nifty100_stocks()
+        additional = [
+            "AARTIIND", "ACC", "ALKEM", "APLLTD", "ASHOKLEY",
+            "ASTRAL", "ATUL", "AUROPHARMA", "BALKRISIND", "BANDHANBNK",
+            "BATAINDIA", "BHARATFORG", "BHEL", "BIOCON", "CANFINHOME",
+            "CASTROLIND", "CENTRALBK", "CHAMBLFERT", "CLEAN", "COFORGE",
+            "CONCOR", "CROMPTON", "CUB", "CUMMINSIND", "CYIENT",
+            "DEEPAKNTR", "DELHIVERY", "DIXON", "ESCORTS", "EXIDEIND",
+            "FEDERALBNK", "FORTIS", "GLENMARK", "GMRAIRPORT", "GNFC",
+            "GSPL", "GUJGASLTD", "HDFCAMC", "HINDZINC", "HONAUT",
+            "IDFCFIRSTB", "IEX", "IIFL", "INDUSTOWER", "INTELLECT",
+            "IPCALAB", "JKCEMENT", "JUBLFOOD", "KANSAINER", "KEI",
+            "LICHSGFIN", "LTF", "LTTS", "M&MFIN", "MANAPPURAM",
+            "MFSL", "MGL", "MPHASIS", "MRF", "MUTHOOTFIN",
+            "NAM-INDIA", "NATIONALUM", "NAVINFLUOR", "NMDC", "OBEROIRLTY",
+            "OFSS", "PAGEIND", "PATANJALI", "PERSISTENT", "PETRONET",
+            "PIIND", "PRESTIGE", "PVRINOX", "RAJESHEXPO", "RAMCOCEM",
+            "RELAXO", "SAIL", "SBILIFE", "SHRIRAMFIN", "SONACOMS",
+            "STARHEALTH", "SUNDARMFIN", "SUNDRMFAST", "SUPREMEIND", "SYNGENE",
+            "TATACHEM", "TATACOMM", "TATAELXSI", "TATAINVEST", "THERMAX",
+            "TIINDIA", "TIMKEN", "TORNTPOWER", "TVSMOTOR", "UBL",
+            "UNIONBANK", "UPL", "VOLTAS", "WHIRLPOOL", "ZEEL"
+        ]
+        # Deduplicate
+        seen = set(nifty100)
+        extras = [s for s in additional if s not in seen]
+        return nifty100 + extras
+
+    def get_nifty_midcap100_stocks(self) -> List[str]:
+        """Get list of NIFTY Midcap 100 constituent stocks"""
+        return [
+            "ABB", "ABCAPITAL", "ACC", "ALKEM", "ASHOKLEY",
+            "ASTRAL", "ATUL", "AUBANK", "BALKRISIND", "BANDHANBNK",
+            "BATAINDIA", "BEL", "BHARATFORG", "BHEL", "BIOCON",
+            "CANFINHOME", "CENTRALBK", "CHOLAFIN", "CLEAN", "COFORGE",
+            "COLPAL", "CONCOR", "CROMPTON", "CUMMINSIND", "CYIENT",
+            "DABUR", "DEEPAKNTR", "DELHIVERY", "DIXON", "DLF",
+            "ESCORTS", "EXIDEIND", "FEDERALBNK", "FORTIS", "GAIL",
+            "GLENMARK", "GMRAIRPORT", "GNFC", "GODREJCP", "GSPL",
+            "GUJGASLTD", "HAL", "HAVELLS", "HDFCAMC", "HONAUT",
+            "ICICIPRULI", "IDFCFIRSTB", "IEX", "IIFL", "INDHOTEL",
+            "INDUSTOWER", "INTELLECT", "IOC", "IPCALAB", "IRCTC",
+            "IRFC", "JIOFIN", "JKCEMENT", "JSL", "JUBLFOOD",
+            "KANSAINER", "KEI", "LICI", "LICHSGFIN", "LTF",
+            "LTTS", "LUPIN", "M&MFIN", "MANAPPURAM", "MARICO",
+            "MFSL", "MGL", "MOTHERSON", "MPHASIS", "MRF",
+            "MUTHOOTFIN", "NAM-INDIA", "NATIONALUM", "NAUKRI", "NAVINFLUOR",
+            "NHPC", "NMDC", "OBEROIRLTY", "OFSS", "PAGEIND",
+            "PERSISTENT", "PETRONET", "PFC", "PIDILITIND", "PIIND",
+            "PNB", "POLYCAB", "PRESTIGE", "PVRINOX", "RECLTD",
+            "SAIL", "SBICARD", "SHREECEM", "SHRIRAMFIN", "SIEMENS",
+        ]
+
+    def get_nifty_smallcap100_stocks(self) -> List[str]:
+        """Get list of NIFTY Smallcap 100 constituent stocks"""
+        return [
+            "AARTIIND", "AETHER", "AFFLE", "AJANTPHARM", "ALOKINDS",
+            "ANGELONE", "ANURAS", "APTUS", "ASTRAZEN", "ATUL",
+            "BASF", "BAYERCROP", "BDL", "BIKAJI", "BLS",
+            "BSE", "CAMPUS", "CAMS", "CARBORUNIV", "CASTROLIND",
+            "CDSL", "CESC", "CHAMBLFERT", "CHALET", "COCHINSHIP",
+            "CRAFTSMAN", "CYIENT", "DATAPATTNS", "DCMSHRIRAM", "DEVYANI",
+            "DOMS", "EASEMYTRIP", "ELGIEQUIP", "EMAMILTD", "ENDURANCE",
+            "EQUITASBNK", "FINEORG", "FIVESTAR", "FLUOROCHEM", "GLAXO",
+            "GRINDWELL", "GSFC", "HAPPSTMNDS", "HEG", "HINDPETRO",
+            "HOMEFIRST", "HUNTSMANIN", "IBULHSGFIN", "IDFC", "INDIGOPNTS",
+            "JBCHEPHARM", "JBMA", "JWL", "KAJARIACER", "KALPATPOWR",
+            "KFINTECH", "KSB", "LAXMIMACH", "LEMONTREE", "LLOYDSME",
+            "LUXIND", "MAHABANK", "MAHLIFE", "MAPMYINDIA", "MASTEK",
+            "METROPOLIS", "NATCOPHARM", "OLECTRA", "PGHH", "PHOENIXLTD",
+            "PNBHOUSING", "POWERINDIA", "PPLPHARMA", "PRSMJOHNSN", "RADICO",
+            "RBLBANK", "REDINGTON", "RITES", "ROUTE", "SAPPHIRE",
+            "SCHNEIDER", "SJVN", "SKFINDIA", "SOLARINDS", "SONATSOFTW",
+            "SPARC", "SUMICHEM", "SUNTV", "TATAINVEST", "TATVA",
+            "TEAMLEASE", "TECHNOE", "TRIDENT", "TRITURBINE", "TTML",
+            "TV18BRDCST", "UTIAMC", "VINATIORGA", "VMART", "WELCORP",
+        ]
+
+    def get_nifty_total_market_stocks(self) -> List[str]:
+        """Get a broad list representing Nifty Total Market Index
+        (combines NIFTY 500 representative list - largest coverage available)"""
+        return self.get_nifty500_stocks()
+
+    def get_index_stocks(self, index_name: str) -> List[str]:
+        """Get stock list for a given index name"""
+        index_map = {
+            "NIFTY 50": self.get_nifty50_stocks,
+            "NIFTY 100": self.get_nifty100_stocks,
+            "NIFTY 500": self.get_nifty500_stocks,
+            "NIFTY Midcap 100": self.get_nifty_midcap100_stocks,
+            "NIFTY Smallcap 100": self.get_nifty_smallcap100_stocks,
+            "Nifty Total Market": self.get_nifty_total_market_stocks,
+            "Bank NIFTY": self.get_banknifty_stocks,
+        }
+        getter = index_map.get(index_name, self.get_nifty50_stocks)
+        return getter()
 
 
 def is_market_open() -> bool:
