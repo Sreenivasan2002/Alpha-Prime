@@ -136,6 +136,19 @@ def init_database():
 
         conn.commit()
         logger.info("Database initialized successfully")
+        _migrate_trades_trading_mode(conn)
+
+
+def _migrate_trades_trading_mode(conn):
+    """Add trading_mode column to trades if missing (paper vs live separation)."""
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA table_info(trades)")
+    columns = [row[1] for row in cursor.fetchall()]
+    if "trading_mode" not in columns:
+        cursor.execute("ALTER TABLE trades ADD COLUMN trading_mode TEXT DEFAULT 'paper'")
+        cursor.execute("UPDATE trades SET trading_mode = 'paper' WHERE trading_mode IS NULL")
+        conn.commit()
+        logger.info("Migrated trades table: added trading_mode column")
 
 
 # ---- Trade Operations ----
@@ -143,46 +156,86 @@ def init_database():
 def record_trade(symbol: str, action: str, quantity: int, price: float,
                  order_type: str = "MARKET", stop_loss: float = None,
                  target: float = None, rationale: str = "", agent_name: str = "",
-                 order_id: str = "", status: str = "EXECUTED") -> int:
-    """Record a trade in the database"""
+                 order_id: str = "", status: str = "EXECUTED",
+                 trading_mode: str = None) -> int:
+    """Record a trade in the database. trading_mode should be 'paper' or 'live'."""
+    if trading_mode is None:
+        trading_mode = getattr(settings.trading, "mode", "paper")
     with db_session() as conn:
         cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO trades (symbol, action, quantity, price, order_type,
-                              stop_loss, target, rationale, agent_name, order_id, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (symbol, action, quantity, price, order_type, stop_loss, target,
-              rationale, agent_name, order_id, status))
+        cursor.execute("PRAGMA table_info(trades)")
+        columns = [row[1] for row in cursor.fetchall()]
+        if "trading_mode" in columns:
+            cursor.execute("""
+                INSERT INTO trades (symbol, action, quantity, price, order_type,
+                                  stop_loss, target, rationale, agent_name, order_id, status, trading_mode)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (symbol, action, quantity, price, order_type, stop_loss, target,
+                  rationale, agent_name, order_id, status, trading_mode))
+        else:
+            cursor.execute("""
+                INSERT INTO trades (symbol, action, quantity, price, order_type,
+                                  stop_loss, target, rationale, agent_name, order_id, status)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (symbol, action, quantity, price, order_type, stop_loss, target,
+                  rationale, agent_name, order_id, status))
         return cursor.lastrowid
 
 
-def get_trades(limit: int = 50, symbol: str = None) -> list:
-    """Get recent trades"""
+def get_trades(limit: int = 50, symbol: str = None, trading_mode: str = None) -> list:
+    """Get recent trades. If trading_mode is 'paper' or 'live', only that mode is returned."""
     with db_session() as conn:
         cursor = conn.cursor()
-        if symbol:
-            cursor.execute(
-                "SELECT * FROM trades WHERE symbol = ? ORDER BY timestamp DESC LIMIT ?",
-                (symbol, limit))
+        cursor.execute("PRAGMA table_info(trades)")
+        columns = [row[1] for row in cursor.fetchall()]
+        has_mode = "trading_mode" in columns
+        if trading_mode and has_mode:
+            if symbol:
+                cursor.execute(
+                    "SELECT * FROM trades WHERE symbol = ? AND trading_mode = ? ORDER BY timestamp DESC LIMIT ?",
+                    (symbol, trading_mode, limit))
+            else:
+                cursor.execute(
+                    "SELECT * FROM trades WHERE trading_mode = ? ORDER BY timestamp DESC LIMIT ?",
+                    (trading_mode, limit))
         else:
-            cursor.execute(
-                "SELECT * FROM trades ORDER BY timestamp DESC LIMIT ?", (limit,))
+            if symbol:
+                cursor.execute(
+                    "SELECT * FROM trades WHERE symbol = ? ORDER BY timestamp DESC LIMIT ?",
+                    (symbol, limit))
+            else:
+                cursor.execute(
+                    "SELECT * FROM trades ORDER BY timestamp DESC LIMIT ?", (limit,))
         return [dict(row) for row in cursor.fetchall()]
 
 
-def get_open_positions() -> list:
-    """Get currently open positions from trade history"""
+def get_open_positions(trading_mode: str = None) -> list:
+    """Get currently open positions from trade history. If trading_mode is 'paper' or 'live', only that mode."""
     with db_session() as conn:
         cursor = conn.cursor()
-        cursor.execute("""
-            SELECT symbol,
-                   SUM(CASE WHEN action = 'BUY' THEN quantity ELSE -quantity END) as net_qty,
-                   AVG(CASE WHEN action = 'BUY' THEN price END) as avg_buy_price
-            FROM trades
-            WHERE status = 'EXECUTED'
-            GROUP BY symbol
-            HAVING net_qty > 0
-        """)
+        cursor.execute("PRAGMA table_info(trades)")
+        columns = [row[1] for row in cursor.fetchall()]
+        has_mode = "trading_mode" in columns
+        if trading_mode and has_mode:
+            cursor.execute("""
+                SELECT symbol,
+                       SUM(CASE WHEN action = 'BUY' THEN quantity ELSE -quantity END) as net_qty,
+                       AVG(CASE WHEN action = 'BUY' THEN price END) as avg_buy_price
+                FROM trades
+                WHERE status = 'EXECUTED' AND trading_mode = ?
+                GROUP BY symbol
+                HAVING net_qty > 0
+            """, (trading_mode,))
+        else:
+            cursor.execute("""
+                SELECT symbol,
+                       SUM(CASE WHEN action = 'BUY' THEN quantity ELSE -quantity END) as net_qty,
+                       AVG(CASE WHEN action = 'BUY' THEN price END) as avg_buy_price
+                FROM trades
+                WHERE status = 'EXECUTED'
+                GROUP BY symbol
+                HAVING net_qty > 0
+            """)
         return [dict(row) for row in cursor.fetchall()]
 
 

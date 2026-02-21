@@ -29,15 +29,16 @@ class PaperTradingBroker:
     """Paper trading broker for simulation/testing"""
 
     def __init__(self):
-        self.capital = settings.trading.capital
+        self.capital = settings.trading.effective_capital  # Use margin-adjusted capital
+        self.actual_capital = settings.trading.capital       # Real cash
         self.positions: Dict[str, dict] = {}
         self.available_cash = self.capital
         self._load_state()
 
     def _load_state(self):
-        """Load existing positions from database"""
+        """Load existing positions from database (paper mode only)"""
         try:
-            open_pos = get_open_positions()
+            open_pos = get_open_positions(trading_mode="paper")
             for pos in open_pos:
                 symbol = pos["symbol"]
                 qty = pos["net_qty"]
@@ -117,7 +118,8 @@ class PaperTradingBroker:
             stop_loss=stop_loss, target=target,
             rationale=rationale, agent_name=agent_name,
             order_id=f"PAPER-{datetime.now(IST).strftime('%Y%m%d%H%M%S')}",
-            status="EXECUTED"
+            status="EXECUTED",
+            trading_mode="paper"
         )
 
         result = {
@@ -373,7 +375,8 @@ class GrowwBroker:
                 price=exec_price, order_type=order_type,
                 stop_loss=stop_loss, target=target,
                 rationale=rationale, agent_name=agent_name,
-                order_id=str(order_id), status=order_status
+                order_id=str(order_id), status=order_status,
+                trading_mode="live"
             )
 
             result = {
@@ -595,3 +598,43 @@ def reset_broker():
     global _paper_broker, _groww_broker
     _paper_broker = None
     _groww_broker = None
+
+
+def set_day_start_if_needed():
+    """Set day-start portfolio value if not set for today (IST). Separate per paper/live mode."""
+    mode = getattr(settings.trading, "mode", "paper")
+    key_date = f"day_start_date_{mode}"
+    key_value = f"day_start_portfolio_value_{mode}"
+    today_ist = datetime.now(IST).strftime("%Y-%m-%d")
+    day_start_date = get_system_state(key_date)
+    if day_start_date == today_ist:
+        return
+    try:
+        broker = get_broker()
+        summary = broker.get_portfolio_summary()
+        value = summary.get("total_portfolio_value", 0) or summary.get("capital", 0)
+        set_system_state(key_value, str(round(value, 2)))
+        set_system_state(key_date, today_ist)
+        logger.info(f"Day start [{mode}]: Rs.{value:,.0f} for {today_ist}")
+    except Exception as e:
+        logger.warning(f"Could not set day start value: {e}")
+
+
+def get_today_pnl_pct() -> float:
+    """Return today's P&L as percent of day-start portfolio. Uses mode-specific keys (paper/live)."""
+    mode = getattr(settings.trading, "mode", "paper")
+    key_value = f"day_start_portfolio_value_{mode}"
+    try:
+        day_start = get_system_state(key_value)
+        if not day_start:
+            return 0.0
+        start_val = float(day_start)
+        if start_val <= 0:
+            return 0.0
+        broker = get_broker()
+        summary = broker.get_portfolio_summary()
+        current = summary.get("total_portfolio_value", 0) or summary.get("capital", 0)
+        return round((current - start_val) / start_val * 100, 2)
+    except Exception as e:
+        logger.warning(f"Could not compute today P&L %: {e}")
+        return 0.0

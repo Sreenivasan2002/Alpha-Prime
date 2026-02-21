@@ -23,7 +23,8 @@ from alpha_prime.agents.tools import (
 from alpha_prime.agents.prompts import (
     get_scanner_prompt, get_analyst_prompt,
     get_risk_manager_prompt, get_execution_prompt,
-    get_portfolio_manager_prompt
+    get_portfolio_manager_prompt,
+    get_bull_prompt, get_bear_prompt, get_debate_judge_prompt
 )
 
 
@@ -34,6 +35,7 @@ class TradingState(TypedDict):
     messages: Sequence[BaseMessage]
     scanner_output: str
     analyst_output: str
+    debate_output: str
     risk_output: str
     execution_output: str
     portfolio_output: str
@@ -48,6 +50,7 @@ def create_initial_state() -> TradingState:
         messages=[],
         scanner_output="",
         analyst_output="",
+        debate_output="",
         risk_output="",
         execution_output="",
         portfolio_output="",
@@ -162,10 +165,9 @@ def scanner_node(state: TradingState) -> TradingState:
     user_msg = """Execute these steps in order:
 1. Call check_market_status to verify market is open
 2. Call get_multiple_stock_prices with "RELIANCE,TCS,HDFCBANK,INFY,ICICIBANK,SBIN,BHARTIARTL,ITC,KOTAKBANK,LT"
-3. Call run_intraday_analysis on the top 3 stocks with highest price movement
-4. Output your TOP 3 BUY candidates with reasons
-
-You MUST identify at least 3 stocks for BUY. Do NOT output "no opportunities found"."""
+3. Call run_intraday_analysis on each stock (or at least on 5-6) to get overall_signal and overall_strength
+4. Pick 1 to 3 BUY candidates with the BEST setup quality: prefer overall_signal=BUY and overall_strength >= 0.6, multiple indicators aligned. Do NOT pick by "highest price movement" alone.
+5. Output your BUY candidates with reasons. If no stock has a strong setup, output NO CLEAR SETUPS with a brief reason."""
 
     output = run_agent_node(
         state, prompt, user_msg,
@@ -211,6 +213,108 @@ Be specific with price levels and use actual market data."""
     return state
 
 
+def debate_node(state: TradingState) -> TradingState:
+    """Bull/Bear Debate: Opposing agents argue for/against each trade, Judge decides"""
+    logger.info("=" * 60)
+    logger.info("PHASE 2.5: BULL/BEAR DEBATE")
+    logger.info("=" * 60)
+
+    analyst_output = state["analyst_output"]
+
+    # If analyst found no trades, skip debate
+    if not analyst_output or "HOLD" in analyst_output.upper() and "BUY" not in analyst_output.upper():
+        logger.info("[debate] No BUY signals from analyst - skipping debate")
+        state["debate_output"] = analyst_output
+        state["current_phase"] = "debate_complete"
+        return state
+
+    # --- BULL AGENT ---
+    logger.info("[debate] Running Bull Agent...")
+    bull_prompt = get_bull_prompt()
+    bull_msg = f"""The Technical Analyst recommends the following trades:
+
+{analyst_output}
+
+Present the STRONGEST BULL CASE for buying these stocks. Use run_intraday_analysis to get fresh data.
+Focus on why THIS is a good entry point and why the trade will be profitable."""
+
+    bull_output = run_agent_node(
+        state, bull_prompt, bull_msg,
+        MARKET_ANALYSIS_TOOLS,
+        "bull_agent",
+        max_iterations=8
+    )
+    logger.info(f"[debate] Bull Agent output: {bull_output[:200]}...")
+
+    # --- BEAR AGENT ---
+    logger.info("[debate] Running Bear Agent...")
+    bear_prompt = get_bear_prompt()
+    bear_msg = f"""The Technical Analyst recommends the following trades:
+
+{analyst_output}
+
+Present the STRONGEST BEAR CASE against buying these stocks. Use run_intraday_analysis to get fresh data.
+Focus on what could go wrong, why the entry is risky, and how much money could be lost."""
+
+    bear_output = run_agent_node(
+        state, bear_prompt, bear_msg,
+        MARKET_ANALYSIS_TOOLS,
+        "bear_agent",
+        max_iterations=8
+    )
+    logger.info(f"[debate] Bear Agent output: {bear_output[:200]}...")
+
+    # --- JUDGE ---
+    logger.info("[debate] Running Debate Judge...")
+    judge_prompt = get_debate_judge_prompt()
+    judge_msg = f"""ORIGINAL ANALYST RECOMMENDATION:
+{analyst_output}
+
+BULL AGENT ARGUMENTS:
+{bull_output}
+
+BEAR AGENT ARGUMENTS:
+{bear_output}
+
+Evaluate both sides and make a GO / NO-GO decision for each stock.
+- Only output GO for stocks where the Bull case clearly outweighs the Bear case.
+- If in doubt, output NO-GO. Protecting capital is priority #1.
+- For GO decisions, include the original entry, stop-loss, target, and strength.
+- For NO-GO decisions, explain which Bear argument was most convincing."""
+
+    judge_output = run_agent_node(
+        state, judge_prompt, judge_msg,
+        [],  # Judge doesn't need tools - just evaluates arguments
+        "debate_judge",
+        max_iterations=3
+    )
+    logger.info(f"[debate] Judge verdict: {judge_output[:300]}...")
+
+    # Combine debate output for risk manager
+    debate_summary = f"""=== BULL/BEAR DEBATE RESULTS ===
+
+BULL ARGUMENTS:
+{bull_output}
+
+BEAR ARGUMENTS:
+{bear_output}
+
+JUDGE VERDICT:
+{judge_output}
+
+=== ORIGINAL ANALYST RECOMMENDATION ===
+{analyst_output}
+"""
+
+    state["debate_output"] = debate_summary
+    state["current_phase"] = "debate_complete"
+
+    log_agent_activity("debate", "complete", "Bull/Bear debate completed",
+                      {"bull_length": len(bull_output), "bear_length": len(bear_output),
+                       "judge_length": len(judge_output)})
+    return state
+
+
 def risk_node(state: TradingState) -> TradingState:
     """Risk Manager: Validates and sizes trades"""
     logger.info("=" * 60)
@@ -218,9 +322,13 @@ def risk_node(state: TradingState) -> TradingState:
     logger.info("=" * 60)
 
     prompt = get_risk_manager_prompt()
-    user_msg = f"""Review the following trade proposals from the Technical Analyst:
 
-{state['analyst_output']}
+    # Use debate output if available (contains judge verdict + analyst recommendations)
+    trade_proposals = state.get("debate_output") or state["analyst_output"]
+
+    user_msg = f"""Review the following trade proposals (includes Bull/Bear debate results if available):
+
+{trade_proposals}
 
 Current Portfolio Status:
 Use the get_portfolio and get_current_positions tools to check the current state.
@@ -289,6 +397,7 @@ def portfolio_review_node(state: TradingState) -> TradingState:
     logger.info("=" * 60)
 
     prompt = get_portfolio_manager_prompt()
+    debate_summary = state.get('debate_output', '')[:400]
     user_msg = f"""Review the completed trading session:
 
 SCANNER OUTPUT:
@@ -296,6 +405,9 @@ SCANNER OUTPUT:
 
 ANALYST OUTPUT:
 {state['analyst_output'][:500]}
+
+DEBATE VERDICT:
+{debate_summary}
 
 RISK DECISIONS:
 {state['risk_output'][:500]}
@@ -334,6 +446,8 @@ def should_continue(state: TradingState) -> str:
     elif phase == "scanner_complete":
         return "analyst"
     elif phase == "analyst_complete":
+        return "debate"
+    elif phase == "debate_complete":
         return "risk"
     elif phase == "risk_complete":
         return "execution"
@@ -350,17 +464,19 @@ def build_trading_pipeline() -> StateGraph:
 
     workflow = StateGraph(TradingState)
 
-    # Add nodes
+    # Add nodes (Scanner -> Analyst -> Bull/Bear Debate -> Risk -> Execution -> Review)
     workflow.add_node("scanner", scanner_node)
     workflow.add_node("analyst", analyst_node)
+    workflow.add_node("debate", debate_node)
     workflow.add_node("risk", risk_node)
     workflow.add_node("execution", execution_node)
     workflow.add_node("portfolio_review", portfolio_review_node)
 
-    # Define edges (linear pipeline)
+    # Define edges (linear pipeline with debate between analyst and risk)
     workflow.set_entry_point("scanner")
     workflow.add_edge("scanner", "analyst")
-    workflow.add_edge("analyst", "risk")
+    workflow.add_edge("analyst", "debate")
+    workflow.add_edge("debate", "risk")
     workflow.add_edge("risk", "execution")
     workflow.add_edge("execution", "portfolio_review")
     workflow.add_edge("portfolio_review", END)

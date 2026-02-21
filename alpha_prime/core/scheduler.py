@@ -14,6 +14,7 @@ from loguru import logger
 
 from alpha_prime.core.config import settings
 from alpha_prime.core.database import log_agent_activity, set_system_state, get_system_state
+from alpha_prime.core.broker import set_day_start_if_needed, get_today_pnl_pct
 from alpha_prime.data.market_data import is_market_open, is_pre_market, market_data
 from alpha_prime.agents.pipeline import run_full_pipeline, run_portfolio_review
 
@@ -43,12 +44,12 @@ class PositionMonitor:
             if stop_loss > 0:
                 self._stop_losses[symbol] = stop_loss
             else:
-                # Default 1.5% trailing stop from entry
-                self._stop_losses[symbol] = entry_price * 0.985
+                # Default 1% stop from entry (tighter for 1% daily target)
+                self._stop_losses[symbol] = entry_price * 0.99
             if target > 0:
                 self._targets[symbol] = target
             else:
-                self._targets[symbol] = entry_price * 1.02  # 2% default target
+                self._targets[symbol] = entry_price * 1.015  # 1.5% default target
 
             logger.info(
                 f"[PositionMonitor] Registered {symbol}: entry={entry_price:.2f}, "
@@ -92,8 +93,8 @@ class PositionMonitor:
                     # Update peak price (trailing)
                     if current_price > peak:
                         self._peak_prices[symbol] = current_price
-                        # Move stop-loss up: trail at 1.5% below new peak
-                        new_sl = current_price * 0.985
+                        # Trail at 1% below peak to lock in gains toward daily 1% target
+                        new_sl = current_price * 0.99
                         if new_sl > sl:
                             self._stop_losses[symbol] = new_sl
                             logger.info(
@@ -411,7 +412,19 @@ class TradingScheduler:
             return
 
         try:
-            logger.info(f"Starting trading cycle at {now.strftime('%H:%M:%S')} IST")
+            set_day_start_if_needed()
+            today_pnl_pct = get_today_pnl_pct()
+            target_pct = settings.trading.daily_profit_target_pct
+            if today_pnl_pct >= target_pct:
+                logger.info(
+                    f"Daily profit target reached: {today_pnl_pct:.2f}% >= {target_pct}%. "
+                    "Skipping new trades to lock in gains."
+                )
+                set_system_state("last_cycle_status", "skipped_daily_target_met")
+                log_agent_activity("scheduler", "skip", f"Daily target {target_pct}% met, P&L={today_pnl_pct:.2f}%")
+                return
+
+            logger.info(f"Starting trading cycle at {now.strftime('%H:%M:%S')} IST (today P&L: {today_pnl_pct:+.2f}%)")
             set_system_state("last_cycle_start", now.isoformat())
             log_agent_activity("scheduler", "cycle_start",
                              f"Trading cycle started at {now.strftime('%H:%M')}")
