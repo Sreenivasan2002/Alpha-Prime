@@ -164,10 +164,14 @@ def scanner_node(state: TradingState) -> TradingState:
     prompt = get_scanner_prompt()
     user_msg = """Execute these steps in order:
 1. Call check_market_status to verify market is open
-2. Call get_multiple_stock_prices with "RELIANCE,TCS,HDFCBANK,INFY,ICICIBANK,SBIN,BHARTIARTL,ITC,KOTAKBANK,LT"
-3. Call run_intraday_analysis on each stock (or at least on 5-6) to get overall_signal and overall_strength
-4. Pick 1 to 3 BUY candidates with the BEST setup quality: prefer overall_signal=BUY and overall_strength >= 0.6, multiple indicators aligned. Do NOT pick by "highest price movement" alone.
-5. Output your BUY candidates with reasons. If no stock has a strong setup, output NO CLEAR SETUPS with a brief reason."""
+2. Call get_top_gainers to find stocks already gaining 1-5% today with above-average volume
+3. From the top gainers, pick the TOP 3-5 stocks with volume_confirmed=true and gain between 1-4%
+4. Run run_intraday_analysis on each of those 3-5 stocks to get technical signals
+5. ONLY pick stocks where overall_signal="BUY" AND volume_confirmed=true AND trend="BULLISH" (strength can be low like 0.15-0.30 — this is normal for intraday data)
+6. For stocks that pass technical filters, call check_news_sentiment
+7. Output your BUY candidates (max 2) with reasons. If no stock passes ALL filters, output NO CLEAR SETUPS.
+
+IMPORTANT: We ONLY buy stocks already moving up today. Do NOT scan a fixed list. Use get_top_gainers first."""
 
     output = run_agent_node(
         state, prompt, user_msg,
@@ -187,19 +191,32 @@ def analyst_node(state: TradingState) -> TradingState:
     logger.info("PHASE 2: TECHNICAL ANALYST")
     logger.info("=" * 60)
 
+    scanner_output = state.get("scanner_output", "")
+
+    # If scanner found NO stocks, skip the analyst — don't let it do its own scan
+    if scanner_output and ("NO CLEAR SETUP" in scanner_output.upper() or
+                           "NO STOCKS" in scanner_output.upper() or
+                           "NO OPPORTUNITIES" in scanner_output.upper()):
+        logger.info("[analyst] Scanner found no setups. Skipping analyst phase.")
+        state["analyst_output"] = "HOLD - Scanner found no qualifying top gainers. No trades today."
+        state["current_phase"] = "analyst_complete"
+        return state
+
     prompt = get_analyst_prompt()
-    user_msg = f"""The Market Scanner has identified the following opportunities:
+    user_msg = f"""The Market Scanner has identified the following TOP GAINER opportunities:
 
-{state['scanner_output']}
+{scanner_output}
 
-For each stock identified above:
-1. Run detailed technical analysis (both daily and intraday)
-2. Identify precise entry points, stop-loss, and target levels
-3. Rate the signal strength
-4. Provide your BUY/SELL/HOLD recommendation
-5. Save signals using the save_signal tool
+IMPORTANT: ONLY analyze the stocks listed above from the scanner. Do NOT scan new stocks or use get_nifty50_stocks. The scanner already picked the best candidates from today's top gainers.
 
-Be specific with price levels and use actual market data."""
+For EACH stock identified above:
+1. Run run_intraday_analysis to get fresh technical data
+2. Check if overall_signal = "BUY" AND trend = "BULLISH" AND volume_confirmed = true
+3. If it passes, call save_signal with the EXACT overall_strength from the tool (do NOT inflate)
+4. Calculate SL = entry - {settings.trading.default_stop_loss_pct}% and target = entry + {settings.trading.default_target_pct}%
+
+If the scanner listed NO stocks, output: HOLD - No qualifying top gainers found.
+Do NOT independently scan NIFTY 50 stocks. ONLY analyze what the scanner gave you."""
 
     output = run_agent_node(
         state, prompt, user_msg,
