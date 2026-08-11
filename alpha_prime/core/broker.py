@@ -59,10 +59,18 @@ class PaperTradingBroker:
                     rationale: str = "", agent_name: str = "") -> Dict:
         """Place a paper trade order"""
         symbol = clean_symbol(symbol)
+        try:
+            quantity = int(quantity)
+        except (TypeError, ValueError):
+            quantity = 0
+        if quantity <= 0:
+            return {"status": "FAILED", "error": f"Invalid quantity {quantity}: must be positive."}
         current_price = price or market_data.get_live_price(symbol)
 
         if current_price is None:
             return {"status": "FAILED", "error": f"Could not get price for {symbol}"}
+
+        realized_pnl = 0.0
 
         if action.upper() == "BUY":
             total_cost = current_price * quantity
@@ -101,6 +109,8 @@ class PaperTradingBroker:
 
             sell_value = current_price * quantity
             avg_buy = self.positions[symbol]["avg_price"]
+            # Realized P&L for this sell (FIFO/average-cost): (exit - avg_entry) * qty
+            realized_pnl = (current_price - avg_buy) * quantity
 
             self.positions[symbol]["quantity"] -= quantity
             self.positions[symbol]["invested"] -= avg_buy * quantity
@@ -119,7 +129,8 @@ class PaperTradingBroker:
             rationale=rationale, agent_name=agent_name,
             order_id=f"PAPER-{datetime.now(IST).strftime('%Y%m%d%H%M%S')}",
             status="EXECUTED",
-            trading_mode="paper"
+            trading_mode="paper",
+            pnl=realized_pnl,
         )
 
         result = {
@@ -130,6 +141,7 @@ class PaperTradingBroker:
             "quantity": quantity,
             "price": current_price,
             "total_value": current_price * quantity,
+            "realized_pnl": round(realized_pnl, 2),
             "available_cash": round(self.available_cash, 2),
             "mode": "PAPER"
         }
@@ -309,9 +321,34 @@ class GrowwBroker:
         """Place a live order via Groww API"""
         self._ensure_client()
         symbol = clean_symbol(symbol)
+        try:
+            quantity = int(quantity)
+        except (TypeError, ValueError):
+            quantity = 0
+        if quantity <= 0:
+            return {"status": "FAILED", "error": f"Invalid quantity {quantity}: must be positive."}
 
         try:
             transaction_type = "BUY" if action.upper() == "BUY" else "SELL"
+
+            # For a SELL we must know the average entry price BEFORE the order
+            # fills, because once it executes the position shrinks (or vanishes)
+            # and the cost basis is no longer recoverable from get_positions().
+            # This entry price is used below to compute realized P&L so that the
+            # trades table, the 3-day cooldown, and the daily-loss breaker all
+            # see accurate live P&L (paper mode already does this natively).
+            avg_buy_price = None
+            if transaction_type == "SELL":
+                try:
+                    pre_positions = self.get_positions()
+                    pos = pre_positions.get(symbol)
+                    if pos:
+                        avg_buy_price = pos.get("avg_price")
+                except Exception as pe:
+                    logger.warning(
+                        f"Could not read entry price for {symbol} before SELL "
+                        f"(realized P&L will be recorded as 0): {pe}"
+                    )
 
             # Build order params matching Groww API signature
             # IMPORTANT: product must be "MIS" for intraday, "CNC" for delivery
@@ -370,13 +407,34 @@ class GrowwBroker:
                 except Exception as se:
                     logger.debug(f"Could not check order status: {se}")
 
+            # Compute realized P&L for a SELL: (exit - avg_entry) * qty.
+            # Only when we have a valid entry price and the order was not
+            # rejected/cancelled — a non-filled sell must not record a phantom
+            # gain/loss that would wrongly trip the cooldown or daily breaker.
+            realized_pnl = 0.0
+            if transaction_type == "SELL":
+                rejected = str(order_status).upper() in ("REJECTED", "CANCELLED", "FAILED")
+                if avg_buy_price and exec_price and not rejected:
+                    realized_pnl = (exec_price - avg_buy_price) * quantity
+                    logger.info(
+                        f"Realized P&L for SELL {quantity} {symbol}: "
+                        f"(exit {exec_price} - entry {avg_buy_price}) x {quantity} "
+                        f"= Rs.{realized_pnl:.2f}"
+                    )
+                elif not rejected:
+                    logger.warning(
+                        f"No entry price available for {symbol}; live SELL P&L "
+                        f"recorded as 0 (realized-loss cooldown disabled for this trade)."
+                    )
+
             trade_id = record_trade(
                 symbol=symbol, action=action.upper(), quantity=quantity,
                 price=exec_price, order_type=order_type,
                 stop_loss=stop_loss, target=target,
                 rationale=rationale, agent_name=agent_name,
                 order_id=str(order_id), status=order_status,
-                trading_mode="live"
+                trading_mode="live",
+                pnl=realized_pnl,
             )
 
             result = {
@@ -387,6 +445,7 @@ class GrowwBroker:
                 "action": action.upper(),
                 "quantity": quantity,
                 "price": exec_price,
+                "realized_pnl": round(realized_pnl, 2),
                 "mode": "LIVE",
                 "groww_response": response if isinstance(response, dict) else str(response)
             }
@@ -601,10 +660,12 @@ def reset_broker():
 
 
 def set_day_start_if_needed():
-    """Set day-start portfolio value if not set for today (IST). Separate per paper/live mode."""
+    """Set day-start CASH value if not set for today (IST). Separate per paper/live mode.
+    We only track available_cash at day start so that delivery holdings price fluctuations
+    don't affect our intraday P&L calculation."""
     mode = getattr(settings.trading, "mode", "paper")
     key_date = f"day_start_date_{mode}"
-    key_value = f"day_start_portfolio_value_{mode}"
+    key_value = f"day_start_cash_{mode}"
     today_ist = datetime.now(IST).strftime("%Y-%m-%d")
     day_start_date = get_system_state(key_date)
     if day_start_date == today_ist:
@@ -612,29 +673,53 @@ def set_day_start_if_needed():
     try:
         broker = get_broker()
         summary = broker.get_portfolio_summary()
-        value = summary.get("total_portfolio_value", 0) or summary.get("capital", 0)
-        set_system_state(key_value, str(round(value, 2)))
+        # Track only available cash at day start (not delivery holdings)
+        cash = summary.get("available_cash", 0) or summary.get("capital", 0)
+        set_system_state(key_value, str(round(cash, 2)))
         set_system_state(key_date, today_ist)
-        logger.info(f"Day start [{mode}]: Rs.{value:,.0f} for {today_ist}")
+        logger.info(f"Day start cash [{mode}]: Rs.{cash:,.0f} for {today_ist}")
     except Exception as e:
         logger.warning(f"Could not set day start value: {e}")
 
 
 def get_today_pnl_pct() -> float:
-    """Return today's P&L as percent of day-start portfolio. Uses mode-specific keys (paper/live)."""
-    mode = getattr(settings.trading, "mode", "paper")
-    key_value = f"day_start_portfolio_value_{mode}"
+    """Return today's INTRADAY P&L as percent of trading capital.
+    Only counts: unrealised P&L from open MIS positions + realised intraday P&L today.
+    Does NOT include delivery holdings value changes (which falsely inflated P&L to 31%)."""
     try:
-        day_start = get_system_state(key_value)
-        if not day_start:
-            return 0.0
-        start_val = float(day_start)
-        if start_val <= 0:
-            return 0.0
         broker = get_broker()
         summary = broker.get_portfolio_summary()
-        current = summary.get("total_portfolio_value", 0) or summary.get("capital", 0)
-        return round((current - start_val) / start_val * 100, 2)
+
+        # Unrealised P&L from currently-open intraday (MIS) positions only.
+        # We deliberately do NOT add each position's Groww `realised_pnl` here:
+        # since live SELLs now record an accurate `pnl` in the trades table
+        # (see GrowwBroker.place_order), the realised portion is summed from the
+        # trades table below. Counting both would double-count partial closes,
+        # and the trades-table path also captures positions that have gone flat
+        # (qty 0, dropped from get_positions).
+        intraday_pnl = 0.0
+        positions = summary.get("positions", {})
+        for sym, pos in positions.items():
+            intraday_pnl += pos.get("pnl", 0)
+
+        # Get realised P&L from today's completed trades (single source of truth
+        # for realised intraday P&L, accurate in both paper and live modes).
+        from alpha_prime.core.database import get_trades
+        today_trades = get_trades(limit=100, trading_mode=settings.trading.mode)
+        today_ist = datetime.now(IST).strftime("%Y-%m-%d")
+        realised_pnl = 0.0
+        for t in (today_trades or []):
+            ts = t.get("timestamp", "")
+            if today_ist in ts and t.get("action") == "SELL":
+                realised_pnl += t.get("pnl", 0) or 0
+
+        total_intraday_pnl = intraday_pnl + realised_pnl
+        capital = settings.trading.capital  # Use actual capital, not margin-inflated
+        if capital <= 0:
+            return 0.0
+
+        pnl_pct = round(total_intraday_pnl / capital * 100, 2)
+        return pnl_pct
     except Exception as e:
-        logger.warning(f"Could not compute today P&L %: {e}")
+        logger.warning(f"Could not compute today intraday P&L %: {e}")
         return 0.0

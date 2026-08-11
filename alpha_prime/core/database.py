@@ -134,6 +134,19 @@ def init_database():
             )
         """)
 
+        # Monitored positions (persisted so restarts don't lose SL/target tracking)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS monitored_positions (
+                symbol TEXT PRIMARY KEY,
+                entry_price REAL NOT NULL,
+                peak_price REAL NOT NULL,
+                stop_loss REAL NOT NULL,
+                target REAL NOT NULL,
+                registered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                trading_mode TEXT DEFAULT 'paper'
+            )
+        """)
+
         conn.commit()
         logger.info("Database initialized successfully")
         _migrate_trades_trading_mode(conn)
@@ -157,10 +170,13 @@ def record_trade(symbol: str, action: str, quantity: int, price: float,
                  order_type: str = "MARKET", stop_loss: float = None,
                  target: float = None, rationale: str = "", agent_name: str = "",
                  order_id: str = "", status: str = "EXECUTED",
-                 trading_mode: str = None) -> int:
-    """Record a trade in the database. trading_mode should be 'paper' or 'live'."""
+                 trading_mode: str = None, pnl: float = 0.0) -> int:
+    """Record a trade in the database. trading_mode should be 'paper' or 'live'.
+    pnl is the realized profit/loss for a SELL (in rupees); 0 for BUYs."""
     if trading_mode is None:
         trading_mode = getattr(settings.trading, "mode", "paper")
+    if pnl is None:
+        pnl = 0.0
     with db_session() as conn:
         cursor = conn.cursor()
         cursor.execute("PRAGMA table_info(trades)")
@@ -168,17 +184,17 @@ def record_trade(symbol: str, action: str, quantity: int, price: float,
         if "trading_mode" in columns:
             cursor.execute("""
                 INSERT INTO trades (symbol, action, quantity, price, order_type,
-                                  stop_loss, target, rationale, agent_name, order_id, status, trading_mode)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                  stop_loss, target, rationale, agent_name, order_id, status, trading_mode, pnl)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (symbol, action, quantity, price, order_type, stop_loss, target,
-                  rationale, agent_name, order_id, status, trading_mode))
+                  rationale, agent_name, order_id, status, trading_mode, pnl))
         else:
             cursor.execute("""
                 INSERT INTO trades (symbol, action, quantity, price, order_type,
-                                  stop_loss, target, rationale, agent_name, order_id, status)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                  stop_loss, target, rationale, agent_name, order_id, status, pnl)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (symbol, action, quantity, price, order_type, stop_loss, target,
-                  rationale, agent_name, order_id, status))
+                  rationale, agent_name, order_id, status, pnl))
         return cursor.lastrowid
 
 
@@ -368,6 +384,51 @@ def get_system_state(key: str, default: str = None) -> str:
         cursor.execute("SELECT value FROM system_state WHERE key = ?", (key,))
         row = cursor.fetchone()
         return row["value"] if row else default
+
+
+# ---- Monitored Positions Operations ----
+
+def save_monitored_position(symbol: str, entry_price: float, peak_price: float,
+                            stop_loss: float, target: float, trading_mode: str = None):
+    """Save or update a monitored position in the database (persists across restarts)"""
+    if trading_mode is None:
+        trading_mode = getattr(settings.trading, "mode", "paper")
+    with db_session() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT OR REPLACE INTO monitored_positions
+            (symbol, entry_price, peak_price, stop_loss, target, registered_at, trading_mode)
+            VALUES (?, ?, ?, ?, ?, datetime('now'), ?)
+        """, (symbol, entry_price, peak_price, stop_loss, target, trading_mode))
+
+
+def remove_monitored_position(symbol: str):
+    """Remove a monitored position from the database (after sell)"""
+    with db_session() as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM monitored_positions WHERE symbol = ?", (symbol,))
+
+
+def get_monitored_positions(trading_mode: str = None) -> list:
+    """Get all monitored positions from the database"""
+    if trading_mode is None:
+        trading_mode = getattr(settings.trading, "mode", "paper")
+    with db_session() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT * FROM monitored_positions WHERE trading_mode = ?",
+            (trading_mode,))
+        return [dict(row) for row in cursor.fetchall()]
+
+
+def clear_monitored_positions(trading_mode: str = None):
+    """Clear all monitored positions for a given mode"""
+    if trading_mode is None:
+        trading_mode = getattr(settings.trading, "mode", "paper")
+    with db_session() as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM monitored_positions WHERE trading_mode = ?",
+                      (trading_mode,))
 
 
 # ---- Cache Operations ----

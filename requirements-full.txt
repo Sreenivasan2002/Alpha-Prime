@@ -1,0 +1,68 @@
+# ============================================
+# Alpha-Prime: full live trading system
+#
+# Everything needed to run the agent pipeline, broker integration,
+# market data and backtester locally:
+#     pip install -r requirements-full.txt
+#
+# The hosted read-only demo installs requirements.txt instead, which is
+# a much smaller subset. See that file for why.
+# ============================================
+
+-r requirements.txt
+
+# --- Core AI & LLM ---
+openai>=1.83.0,<2.0.0
+langchain>=1.2.0
+langchain-openai>=1.1.0
+langchain-community>=0.4.0
+langchain-core>=1.2.0
+langgraph>=1.0.0
+crewai>=1.9.0
+crewai-tools>=1.9.0
+
+# --- Groww API (Broker Integration) ---
+growwapi>=1.5.0
+
+# --- Financial Data Providers ---
+yfinance>=1.1.0
+pandas-ta>=0.4.71b0
+
+# --- Technical Analysis & Charts ---
+mplfinance>=0.12.10
+kaleido>=1.2.0
+
+# --- Data & Computation ---
+scipy>=1.17.0
+numba>=0.61.0
+
+# --- Web UI ---
+streamlit-autorefresh>=1.0.1
+
+# --- HTTP & API Clients ---
+requests>=2.32.0
+aiohttp>=3.13.0
+httpx>=0.28.0
+websockets>=16.0
+
+# --- Scheduling ---
+apscheduler>=3.11.0
+
+# --- Authentication ---
+pyotp>=2.9.0
+
+# --- Database ---
+sqlalchemy>=2.0.0
+aiosqlite>=0.21.0
+
+# --- Environment & Config ---
+
+# --- Logging & Monitoring ---
+rich>=14.3.0
+
+# --- Timezone ---
+
+# --- Utilities ---
+python-dateutil>=2.9.0
+tabulate>=0.9.0
+beautifulsoup4>=4.13.0
