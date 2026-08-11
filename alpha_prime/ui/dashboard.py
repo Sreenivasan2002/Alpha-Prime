@@ -24,14 +24,42 @@ from alpha_prime.core.database import (
     get_watchlist, add_to_watchlist, remove_from_watchlist,
     get_open_positions, init_database, get_system_state
 )
-from alpha_prime.core.broker import get_broker, reset_broker, GrowwBroker
-from alpha_prime.core.scheduler import trading_scheduler, position_monitor
-from alpha_prime.data.market_data import (
-    market_data, is_market_open, is_pre_market, time_to_market_open, clean_symbol
+from alpha_prime.core.market_hours import (
+    is_market_open, is_pre_market, time_to_market_open, clean_symbol
 )
-from alpha_prime.data.technical_analysis import technical_analyzer
+
+if settings.demo.enabled:
+    # The demo is read-only over a snapshot: it never places an order, runs
+    # the agent pipeline, or fetches a quote. Skipping these imports keeps
+    # langchain, langgraph, openai, apscheduler, yfinance and pandas-ta out
+    # of the hosted deployment entirely -- see requirements-cloud.txt.
+    get_broker = reset_broker = GrowwBroker = None
+    trading_scheduler = position_monitor = None
+    market_data = technical_analyzer = None
+else:
+    from alpha_prime.core.broker import get_broker, reset_broker, GrowwBroker
+    from alpha_prime.core.scheduler import trading_scheduler, position_monitor
+    from alpha_prime.data.market_data import market_data
+    from alpha_prime.data.technical_analysis import technical_analyzer
 
 IST = pytz.timezone("Asia/Kolkata")
+
+
+def demo_notice(feature: str, explanation: str = "") -> bool:
+    """Render a demo-mode notice for a feature that needs live market data.
+
+    Returns True when the caller should stop (demo mode), False otherwise,
+    so call sites read as: ``if demo_notice(...): return``.
+    """
+    if not settings.demo.enabled:
+        return False
+    st.info(
+        f"**{feature} is disabled in the public demo.** "
+        "This deployment runs read-only against a snapshot so it needs no "
+        "API keys and costs nothing to host."
+        + (f"\n\n{explanation}" if explanation else "")
+    )
+    return True
 
 # ---- Page Config ----
 st.set_page_config(
@@ -356,8 +384,10 @@ def render_header():
                    f'{now.strftime("%H:%M:%S")} IST</span>', unsafe_allow_html=True)
 
     with s3:
-        mode = settings.trading.mode.upper()
-        if mode == "LIVE":
+        if settings.demo.enabled:
+            st.markdown('<span class="badge badge-blue">DEMO - READ ONLY</span>',
+                       unsafe_allow_html=True)
+        elif settings.trading.mode.upper() == "LIVE":
             st.markdown('<span class="badge badge-red">LIVE TRADING</span>',
                        unsafe_allow_html=True)
         else:
@@ -365,7 +395,10 @@ def render_header():
                        unsafe_allow_html=True)
 
     with s4:
-        if trading_scheduler.is_running():
+        if settings.demo.enabled:
+            st.markdown('<span class="badge badge-yellow">PAPER RESULTS</span>',
+                       unsafe_allow_html=True)
+        elif trading_scheduler.is_running():
             st.markdown('<span class="badge badge-green">SCHEDULER ON</span>',
                        unsafe_allow_html=True)
         else:
@@ -373,22 +406,73 @@ def render_header():
                        unsafe_allow_html=True)
 
     with s5:
-        groww_status = get_system_state("groww_auth_status", "not connected")
-        if "authenticated" in groww_status:
-            st.markdown('<span class="badge badge-green">GROWW OK</span>',
-                       unsafe_allow_html=True)
-        elif "failed" in groww_status:
-            st.markdown('<span class="badge badge-red">GROWW ERROR</span>',
-                       unsafe_allow_html=True)
+        if settings.demo.enabled:
+            st.markdown(
+                '<a href="https://github.com/Sreenivasan2002/Alpha-Prime" '
+                'class="badge badge-blue" style="text-decoration:none;">SOURCE</a>',
+                unsafe_allow_html=True)
         else:
-            st.markdown('<span class="badge badge-blue">GROWW N/A</span>',
-                       unsafe_allow_html=True)
+            groww_status = get_system_state("groww_auth_status", "not connected")
+            if "authenticated" in groww_status:
+                st.markdown('<span class="badge badge-green">GROWW OK</span>',
+                           unsafe_allow_html=True)
+            elif "failed" in groww_status:
+                st.markdown('<span class="badge badge-red">GROWW ERROR</span>',
+                           unsafe_allow_html=True)
+            else:
+                st.markdown('<span class="badge badge-blue">GROWW N/A</span>',
+                           unsafe_allow_html=True)
 
     st.markdown("---")
 
 
+def render_demo_sidebar():
+    """Read-only sidebar for the public demo.
+
+    Renders no credential inputs and no execution controls at all -- the
+    unsafe widgets are never created rather than created-and-disabled.
+    """
+    with st.sidebar:
+        st.markdown("### Demo Mode")
+        st.info(
+            "Read-only showcase running against a snapshot of real "
+            "paper-trading history. Broker execution, the LLM agent "
+            "pipeline, and credential entry are disabled."
+        )
+
+        st.markdown("---")
+        st.markdown("#### Risk Parameters")
+        st.caption("Enforced in code, not in prompts. See `core/risk.py`.")
+        for label, value in [
+            ("Capital", f"Rs {settings.trading.capital:,.0f}"),
+            ("Risk per trade", f"{settings.trading.risk_per_trade_pct}% of capital"),
+            ("Max position size", f"{settings.trading.max_position_size_pct}% of capital"),
+            ("Max daily loss", f"{settings.trading.max_daily_loss_pct}%"),
+            ("Max open positions", f"{settings.trading.max_open_positions}"),
+            ("Stop loss / target", f"{settings.trading.default_stop_loss_pct}% / "
+                                   f"{settings.trading.default_target_pct}%"),
+        ]:
+            st.markdown(
+                f"<div style='display:flex;justify-content:space-between;"
+                f"font-size:0.82rem;padding:3px 0;border-bottom:1px solid "
+                f"rgba(255,255,255,0.06)'><span style='color:#94a3b8'>{label}"
+                f"</span><span style='color:#e2e8f0;font-weight:600'>{value}</span></div>",
+                unsafe_allow_html=True,
+            )
+
+        st.markdown("---")
+        st.markdown(
+            "[Source on GitHub](https://github.com/Sreenivasan2002/Alpha-Prime)"
+        )
+        st.caption("Run locally with `DEMO_MODE=false` for the live system.")
+
+
 def render_sidebar():
     """Sidebar with controls"""
+    if settings.demo.enabled:
+        render_demo_sidebar()
+        return
+
     with st.sidebar:
         st.markdown("### Control Panel")
 
@@ -523,23 +607,52 @@ def render_sidebar():
             "Trading Capital (Rs.)", 1000.0, 10000000.0, settings.trading.capital, 1000.0)
 
 
+def demo_portfolio_summary():
+    """Portfolio summary derived from the snapshot, with no broker call.
+
+    Realized P&L in the snapshot is reconstructed by FIFO lot-matching the
+    recorded fills (see scripts/build_demo_db.py); the recorded history
+    predates the per-SELL P&L attribution fix.
+    """
+    capital = settings.trading.capital
+    history = get_portfolio_history(limit=1)
+    total_pnl = history[0].get("total_pnl", 0.0) if history else 0.0
+    equity = capital + total_pnl
+
+    return {
+        "total_portfolio_value": equity,
+        "total_pnl": total_pnl,
+        "total_pnl_pct": (total_pnl / capital * 100) if capital else 0.0,
+        "available_cash": equity,
+        "total_invested": 0.0,
+        "num_positions": 0,
+        "positions": {},
+        "mode": "DEMO",
+        "capital": capital,
+    }
+
+
 def render_portfolio_tab():
     """Portfolio Overview"""
 
     # Try to get portfolio data
-    try:
-        broker = get_broker()
-        summary = broker.get_portfolio_summary()
-        error_msg = summary.get("error", "")
-    except Exception as e:
-        error_msg = str(e)
-        summary = {
-            "total_portfolio_value": 0, "total_pnl": 0,
-            "total_pnl_pct": 0, "available_cash": 0,
-            "total_invested": 0, "num_positions": 0,
-            "positions": {}, "mode": settings.trading.mode.upper(),
-            "capital": settings.trading.capital
-        }
+    if settings.demo.enabled:
+        summary = demo_portfolio_summary()
+        error_msg = ""
+    else:
+        try:
+            broker = get_broker()
+            summary = broker.get_portfolio_summary()
+            error_msg = summary.get("error", "")
+        except Exception as e:
+            error_msg = str(e)
+            summary = {
+                "total_portfolio_value": 0, "total_pnl": 0,
+                "total_pnl_pct": 0, "available_cash": 0,
+                "total_invested": 0, "num_positions": 0,
+                "positions": {}, "mode": settings.trading.mode.upper(),
+                "capital": settings.trading.capital
+            }
 
     if error_msg:
         st.warning(f"Could not fetch live data: {error_msg}")
@@ -556,20 +669,15 @@ def render_portfolio_tab():
         else:
             return f"{val:,.0f}"
 
-    col1, col2, col3, col4, col5 = st.columns(5)
+    col1, col2, col3 = st.columns(3)
     with col1:
-        val = summary.get('total_portfolio_value', summary.get('capital', 0))
-        st.metric("Portfolio Value", f"Rs {fmt_rs(val)}")
+        st.metric("Balance", f"Rs {fmt_rs(summary.get('available_cash', 0))}")
     with col2:
+        st.metric("Invested in Intraday", f"Rs {fmt_rs(summary.get('total_invested', 0))}")
+    with col3:
         pnl = summary.get('total_pnl', 0)
         pnl_pct = summary.get('total_pnl_pct', 0)
-        st.metric("Total P&L", f"Rs {fmt_rs(pnl)}", delta=f"{pnl_pct:+.2f}%")
-    with col3:
-        st.metric("Available Cash", f"Rs {fmt_rs(summary.get('available_cash', 0))}")
-    with col4:
-        st.metric("Invested", f"Rs {fmt_rs(summary.get('total_invested', 0))}")
-    with col5:
-        st.metric("Positions", summary.get('num_positions', 0))
+        st.metric("Profit & Loss", f"Rs {fmt_rs(pnl)}", delta=f"{pnl_pct:+.2f}%")
 
     st.markdown("")  # spacer
 
@@ -587,9 +695,12 @@ def render_portfolio_tab():
                 mode="lines",
                 name="Value",
                 line=dict(color="#60a5fa", width=2.5),
-                fill="tozeroy",
-                fillcolor="rgba(96, 165, 250, 0.08)"
             ))
+            # Pad around the actual range rather than anchoring at zero: equity
+            # moves a few percent, which is invisible on a 0-based axis.
+            lo = float(hist_df["total_value"].min())
+            hi = float(hist_df["total_value"].max())
+            pad = max((hi - lo) * 0.15, hi * 0.005) or 1.0
             fig.update_layout(
                 height=380,
                 margin=dict(l=10, r=10, t=10, b=30),
@@ -597,7 +708,8 @@ def render_portfolio_tab():
                 plot_bgcolor="rgba(0,0,0,0)",
                 xaxis=dict(gridcolor="rgba(255,255,255,0.06)", showgrid=True),
                 yaxis=dict(gridcolor="rgba(255,255,255,0.06)", showgrid=True,
-                          title="Rs.", tickformat=","),
+                          title="Rs.", tickformat=",",
+                          range=[lo - pad, hi + pad]),
                 font=dict(color="#94a3b8"),
                 showlegend=False
             )
@@ -645,8 +757,8 @@ def render_portfolio_tab():
         st.dataframe(pd.DataFrame(h_rows), width="stretch",
                     hide_index=True, height=250)
 
-    # Position Monitor Status
-    monitor_status = position_monitor.get_status()
+    # Position Monitor Status (never populated in demo: no pipeline runs there)
+    monitor_status = {} if settings.demo.enabled else position_monitor.get_status()
     if monitor_status:
         st.markdown("##### Position Monitor (Trailing Stop-Loss)")
         mon_rows = []
@@ -784,7 +896,7 @@ def render_portfolio_tab():
     st.markdown("")  # spacer
 
     # Show Groww account details if live mode
-    if settings.trading.mode == "live":
+    if settings.trading.mode == "live" and not settings.demo.enabled:
         try:
             broker = get_broker()
             if isinstance(broker, GrowwBroker):
@@ -837,6 +949,17 @@ def render_signals_tab():
 
 def render_analysis_tab():
     """Manual Stock Analysis with Charts"""
+    if demo_notice(
+        "Live technical analysis",
+        "The analysis engine computes RSI, MACD, Bollinger Bands, ADX, VWAP "
+        "and volume confirmation, then produces a composite signal whose "
+        "strength is capped at 0.85. Its output on real market data is "
+        "visible in the **Signals** tab, which shows 689 signals recorded "
+        "during paper trading along with the indicator values behind each. "
+        "Source: `alpha_prime/data/technical_analysis.py`.",
+    ):
+        return
+
     col_input, col_chart = st.columns([1, 2])
 
     with col_input:
@@ -991,6 +1114,29 @@ def render_agent_logs_tab():
             st.info("No agent logs yet. Run a trading cycle to see agent activity here.")
 
 
+def render_watchlist_tab_demo():
+    """Read-only watchlist view: snapshot rows, no live prices, no edits."""
+    st.markdown("##### Watchlist")
+    st.caption("Read-only in the public demo. Live quotes are not fetched.")
+    watchlist = get_watchlist()
+    if not watchlist:
+        st.info("Watchlist is empty in this snapshot.")
+        return
+    st.dataframe(
+        pd.DataFrame([
+            {
+                "Symbol": w["symbol"],
+                "Sector": w.get("sector", ""),
+                "Notes": w.get("notes", ""),
+                "Added": str(w.get("added_at", ""))[:10],
+            }
+            for w in watchlist
+        ]),
+        width="stretch",
+        hide_index=True,
+    )
+
+
 def render_watchlist_tab():
     """Watchlist Management"""
     col_add, col_list = st.columns([1, 3])
@@ -1039,6 +1185,45 @@ def render_watchlist_tab():
                 st.rerun()
         else:
             st.info("Watchlist empty. Add stocks above.")
+
+
+def render_top_movers_tab_demo():
+    """Static explanation of the top-gainers scanner for the public demo."""
+    st.markdown("##### Momentum Scanner")
+    st.info(
+        "**Live scanning is disabled in the public demo.** "
+        "This deployment runs read-only against a snapshot so it needs no "
+        "API keys and costs nothing to host."
+    )
+    st.markdown(
+        """
+The scanner ranks the NIFTY 100 by intraday gain and only considers stocks
+already up **1-5%** on the day, rather than screening a fixed watchlist.
+
+This replaced an earlier fixed ten-stock list. Scanning a static list meant
+repeatedly analysing names that had no momentum that day, which produced
+weak entries. Ranking by actual intraday gain rides confirmed momentum
+instead of predicting which name is about to move, and the 5% ceiling avoids
+chasing exhausted moves.
+
+Candidates must additionally clear a signal-strength floor and volume
+confirmation before they reach the agent pipeline.
+
+Implementation: `get_top_gainers()` in `alpha_prime/agents/tools.py`.
+"""
+    )
+    signals = get_signals(limit=200)
+    if signals:
+        symbols = {}
+        for s in signals:
+            symbols[s["symbol"]] = symbols.get(s["symbol"], 0) + 1
+        top = sorted(symbols.items(), key=lambda x: -x[1])[:12]
+        st.markdown("##### Most-scanned symbols in the recorded session")
+        st.dataframe(
+            pd.DataFrame(top, columns=["Symbol", "Signals recorded"]),
+            width="stretch",
+            hide_index=True,
+        )
 
 
 def render_top_movers_tab():
@@ -1500,37 +1685,152 @@ def render_live_activity_tab():
         st.metric("Errors", error_count, delta_color="inverse")
 
 
+def render_backtest_tab():
+    """Backtest results: event-driven, no-lookahead, net of Indian intraday costs."""
+    results_dir = settings.project_root / "backtest_results"
+    trades_csv = results_dir / "trades_current.csv"
+    equity_csv = results_dir / "equity_current.csv"
+    sweep_csv = results_dir / "sweep_results.csv"
+
+    st.markdown("##### Backtest")
+    st.caption(
+        "Event-driven simulation over 5-minute bars. No lookahead: signals are "
+        "computed only from bars available at decision time. Reuses the same "
+        "`TechnicalAnalyzer` and the same position-sizing functions as the live "
+        "system (`alpha_prime/core/risk.py`), so the backtest cannot drift from "
+        "live behaviour."
+    )
+
+    if not trades_csv.exists():
+        st.info("No backtest results committed. Run `python run_backtest.py` to generate them.")
+        return
+
+    bt = pd.read_csv(trades_csv)
+    net = bt["pnl"].sum()
+    gross = bt["gross_pnl"].sum() if "gross_pnl" in bt.columns else net
+    costs = bt["cost"].sum() if "cost" in bt.columns else 0.0
+    wins = bt[bt["pnl"] > 0]["pnl"]
+    losses = bt[bt["pnl"] < 0]["pnl"]
+    gross_profit = wins.sum()
+    gross_loss = abs(losses.sum())
+
+    span = (
+        f"{len(bt['symbol'].unique())} symbols | "
+        f"{str(bt['entry_time'].min())[:10]} to {str(bt['exit_time'].max())[:10]}"
+    )
+    st.caption(f"Run: {span}")
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Trades", f"{len(bt)}")
+    c2.metric("Net P&L", f"Rs {net:,.0f}",
+              delta=f"{net / settings.trading.capital * 100:+.2f}% on capital")
+    c3.metric("Win rate", f"{len(wins) / len(bt) * 100:.1f}%")
+    c4.metric("Profit factor",
+              f"{gross_profit / gross_loss:.2f}" if gross_loss else "n/a")
+
+    # The headline finding: costs, not signal quality, are the binding constraint.
+    cost_share = (costs / gross * 100) if gross > 0 else 0.0
+    st.warning(
+        f"**Transaction costs are the binding constraint.** Modelling brokerage, "
+        f"STT, exchange and SEBI fees, stamp duty and GST on this run: "
+        f"gross **Rs {gross:,.0f}** minus costs **Rs {costs:,.0f}** leaves net "
+        f"**Rs {net:,.0f}**. Costs consume **{cost_share:.0f}%** of gross profit. "
+        f"With an average win around 0.5%, each round trip has to clear roughly "
+        f"Rs {costs / len(bt):,.0f} in fees before it earns anything. This, not "
+        f"the risk controls, is what stands between the strategy and profitability."
+    )
+
+    if equity_csv.exists():
+        eq = pd.read_csv(equity_csv)
+        eq["date"] = pd.to_datetime(eq["date"])
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=eq["date"], y=eq["equity"], mode="lines",
+            line=dict(color="#34d399", width=2), name="Equity",
+        ))
+        fig.update_layout(
+            height=260, margin=dict(l=10, r=10, t=10, b=25),
+            paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+            xaxis=dict(gridcolor="rgba(255,255,255,0.06)"),
+            yaxis=dict(gridcolor="rgba(255,255,255,0.06)", title="Equity (Rs)"),
+            font=dict(color="#94a3b8", size=10), showlegend=False,
+        )
+        st.plotly_chart(fig, width="stretch")
+
+    if sweep_csv.exists():
+        st.markdown("##### Parameter sweep (net of costs)")
+        st.caption(
+            "Grid over stop-loss, target and trailing-stop settings. Wider targets "
+            "won consistently: 2.5% > 1.8% > 1.2%, because a larger move dwarfs the "
+            "fixed round-trip cost. Trailing-stop parameters barely mattered, since "
+            "most positions exit at the end-of-day square-off rather than by trailing. "
+            "**This sweep was run on an earlier 60-day window than the run above**, so "
+            "its P&L figures are not directly comparable to the headline numbers - "
+            "the gap between them is the out-of-sample effect described below."
+        )
+        sweep = pd.read_csv(sweep_csv)
+        st.dataframe(sweep.head(15), width="stretch", hide_index=True)
+
+    with st.expander("What this backtest does not prove"):
+        st.markdown(
+            """
+- The sweep selected parameters on the **same data** it was scored on, so those
+  results are in-sample and optimistic. Walk-forward validation is not yet done.
+- Evidence of exactly that: the parameters the sweep chose returned +3.32% over
+  its own 60-day window, but only **+1.09%** when the same settings were re-run
+  on a later 60-day window. Most of the apparent edge did not survive the move
+  out of sample.
+- Only ~60 days of 5-minute history is available from the data provider, covering
+  a single market regime.
+- Slippage defaults to zero. Costs are modelled; adverse fills are not.
+- A profit factor near 1.2 on ~265 trades is a thin edge, not a proven one.
+- The backtest exercises the mechanical signal engine only. The LLM debate layer
+  that runs in the live pipeline is not simulated.
+
+The honest summary: after costs this strategy is around breakeven to slightly
+positive on the data available. The position-sizing and daily-loss controls are
+unambiguously correct because they remove the catastrophic-loss tail, but they
+do not by themselves make the system profitable.
+"""
+        )
+
+
 def main():
     """Main app"""
     init_database()
     render_header()
     render_sidebar()
 
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
-        "Portfolio", "Top Movers", "Live Activity",
-        "Trades", "Signals", "Analysis", "Agent Logs", "Watchlist"
-    ])
+    demo = settings.demo.enabled
 
-    with tab1:
+    tab_names = ["Portfolio", "Backtest", "Top Movers", "Live Activity",
+                 "Trades", "Signals", "Analysis", "Agent Logs", "Watchlist"]
+    tabs = st.tabs(tab_names)
+
+    with tabs[0]:
         render_portfolio_tab()
-    with tab2:
-        render_top_movers_tab()
-    with tab3:
+    with tabs[1]:
+        render_backtest_tab()
+    with tabs[2]:
+        render_top_movers_tab_demo() if demo else render_top_movers_tab()
+    with tabs[3]:
         render_live_activity_tab()
-    with tab4:
+    with tabs[4]:
         render_trades_tab()
-    with tab5:
+    with tabs[5]:
         render_signals_tab()
-    with tab6:
+    with tabs[6]:
         render_analysis_tab()
-    with tab7:
+    with tabs[7]:
         render_agent_logs_tab()
-    with tab8:
-        render_watchlist_tab()
+    with tabs[8]:
+        render_watchlist_tab_demo() if demo else render_watchlist_tab()
 
-    # Auto-refresh every 30 seconds
-    from streamlit_autorefresh import st_autorefresh
-    st_autorefresh(interval=30000, key="auto_refresh")
+    # Auto-refresh only matters when a live pipeline is writing to the DB.
+    # On the static demo it would just burn cloud CPU on a snapshot.
+    if not demo:
+        from streamlit_autorefresh import st_autorefresh
+        st_autorefresh(interval=30000, key="auto_refresh")
 
 
 if __name__ == "__main__":

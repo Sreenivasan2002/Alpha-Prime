@@ -1,6 +1,7 @@
 # Environment & Secrets
 .env
 *.env
+!.env.example
 
 # Python
 venv/
@@ -9,21 +10,31 @@ __pycache__/
 *.pyo
 
 # Database
+# The live trading DB is private. The demo snapshot under data/demo/ is
+# committed on purpose -- it is what the public dashboard reads.
 *.db
 data/alpha_prime.db
 data/historical/
+!data/demo/*.db
 
 # Logs
 logs/
-
-
 
 # IDE & OS
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
+.claude/
+
+# Local scratch notes
+helper.txt
+
+# Reference material and design docs (large binaries, not part of the app)
+*.pdf
+*.docx
+*.pptx
+Autonomous traders/
 
 # Build artifacts
-Alpha-Prime_AWS_Hackathon_Submission.pptx
 requirements-lock.txt
