@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg
+  PUBLIC '-//W3C//DTD SVG 1.0//EN'
+  'http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd'>
+<svg width="555" height="392" preserveAspectRatio="xMinYMin meet" viewBox="0 0 555 392" xmlns="http://www.w3.org/2000/svg" version="1.0" fill-rule="evenodd" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<title>...</title>
+	<desc>...</desc>
+	<clipPath id="clip">
+		<rect x="0" y="0" width="555" height="392"/>
+	</clipPath>
+	<g id="group" transform="scale(1,-1) translate(0,-392)" style="clip-path: url(#clip)">
+		<g transform="">
+			<rect x="0" y="0" width="555" height="392" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<g transform=" matrix(1,0,0,1,20,20)">
+				<rect x="70" y="322" width="300" height="26" rx="5" ry="5" style="stroke: rgb(53%,52%,50%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd; stroke-dasharray: 3, 2;"/>
+				<text x="116.9775390625" y="331.09999999999997" style="font-family: UI-Bold; font-size: 7.8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,662) scale(1,-1)">load_data: yfinance 5-min OHLCV, IST index, per symbol</text>
+				<polyline points="220 322, 220 310" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="220 310, 222.3474 314.4147, 217.6526 314.4147" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<rect x="70" y="282" width="300" height="28" rx="5" ry="5" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 1; fill: rgb(91%,94%,98%); fill-rule: evenodd;"/>
+				<text x="130.8712890625" y="296.598" style="font-family: UI-Bold; font-size: 7.8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,593) scale(1,-1)">precompute_signals (memoised per symbol, bar)</text>
+				<text x="153.651123046875" y="287.60200000000003" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,575) scale(1,-1)">TA on bars strictly BEFORE t  -&gt;  no lookahead</text>
+				<polyline points="220 282, 220 270" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="220 270, 222.3474 274.4147, 217.6526 274.4147" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<rect x="60" y="96" width="320" height="172" rx="7" ry="7" style="stroke: rgb(76%,76%,71%); stroke-linecap: butt; stroke-width: 1; fill: rgb(97%,97%,96%); fill-rule: evenodd;"/>
+				<text x="68" y="256" style="font-family: UI-Bold; font-size: 7px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,512) scale(1,-1)">FOR EACH 5-MIN TIMESTAMP (all symbols merged)</text>
+				<rect x="76" y="206" width="288" height="40" rx="5" ry="5" style="stroke: rgb(0%,51%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(90%,95%,90%); fill-rule: evenodd;"/>
+				<text x="172.17548828125" y="230.65599999999998" style="font-family: UI-Bold; font-size: 7.8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,461) scale(1,-1)">A. Manage open positions</text>
+				<text x="108.2595947265625" y="221.85999999999996" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,443) scale(1,-1)">exit order: 15:15/last bar -&gt; gap below stop -&gt; stop -&gt; gap over target -&gt; target</text>
+				<text x="124.4525634765625" y="213.54399999999995" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,427) scale(1,-1)">stop+target in one bar = stop (pessimistic); trail updated at bar close</text>
+				<polyline points="220 206, 220 196" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="220 196, 222.3474 200.4147, 217.6526 200.4147" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<rect x="76" y="164" width="288" height="30" rx="5" ry="5" style="stroke: rgb(83%,32%,12%); stroke-linecap: butt; stroke-width: 1; fill: rgb(99%,93%,90%); fill-rule: evenodd;"/>
+				<text x="190.980419921875" y="179.498" style="font-family: UI-Bold; font-size: 7.8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,358) scale(1,-1)">B. Daily breaker</text>
+				<text x="123.811181640625" y="170.70199999999997" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,341) scale(1,-1)">realised + open P&amp;L &lt;= -2% or &gt;= +1.5%  -&gt;  no more entries today</text>
+				<polyline points="220 164, 220 154" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="220 154, 222.3474 158.4147, 217.6526 158.4147" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<rect x="76" y="104" width="288" height="48" rx="5" ry="5" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 1; fill: rgb(91%,94%,98%); fill-rule: evenodd;"/>
+				<text x="166.068408203125" y="136.814" style="font-family: UI-Bold; font-size: 7.8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,273) scale(1,-1)">C. Entries (at this bar's OPEN)</text>
+				<text x="151.601318359375" y="128.01799999999997" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,256) scale(1,-1)">in window, not in cooldown, below max positions</text>
+				<text x="151.644384765625" y="119.70199999999997" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,239) scale(1,-1)">qty = min(compute_max_quantity, buying power)</text>
+				<text x="176.89052734375" y="111.38599999999997" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,222) scale(1,-1)">signal from cache must be BUY</text>
+				<polyline points="380 126, 396 126, 396 232, 380 232" style="stroke: rgb(53%,52%,50%); stroke-linecap: butt; stroke-width: 0.9; fill: None; fill-rule: evenodd;"/>
+				<polygon points="380 232, 384.4147 229.6526, 384.4147 234.3474" style="stroke: rgb(53%,52%,50%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(53%,52%,50%); fill-rule: evenodd;"/>
+				<rect x="398" y="174" width="27.432373046875" height="9.0" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+				<text x="400" y="176" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,352) scale(1,-1)">next bar</text>
+				<polyline points="220 96, 220 84" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="220 84, 222.3474 88.41474, 217.6526 88.41474" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<rect x="70" y="56" width="300" height="28" rx="5" ry="5" style="stroke: rgb(83%,32%,12%); stroke-linecap: butt; stroke-width: 1; fill: rgb(99%,93%,90%); fill-rule: evenodd;"/>
+				<text x="137.734375" y="70.498" style="font-family: UI-Bold; font-size: 7.8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,140) scale(1,-1)">Each exit: pnl = gross - round-trip costs (net)</text>
+				<text x="149.423388671875" y="61.70200000000001" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,123) scale(1,-1)">costs from BacktestConfig; loss -&gt; 3-day cooldown</text>
+				<polyline points="220 56, 220 44" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="220 44, 222.3474 48.41474, 217.6526 48.41474" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<rect x="70" y="16" width="300" height="26" rx="5" ry="5" style="stroke: rgb(69%,47%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(99%,95%,87%); fill-rule: evenodd;"/>
+				<text x="131.970068359375" y="25.099999999999998" style="font-family: UI-Bold; font-size: 7.8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,50) scale(1,-1)">Metrics + CSV: trades, equity curve, sweep table</text>
+			</g>
+		</g>
+	</g>
+</svg>

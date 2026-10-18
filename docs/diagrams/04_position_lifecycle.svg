@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg
+  PUBLIC '-//W3C//DTD SVG 1.0//EN'
+  'http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd'>
+<svg width="555" height="290" preserveAspectRatio="xMinYMin meet" viewBox="0 0 555 290" xmlns="http://www.w3.org/2000/svg" version="1.0" fill-rule="evenodd" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<title>...</title>
+	<desc>...</desc>
+	<clipPath id="clip">
+		<rect x="0" y="0" width="555" height="290"/>
+	</clipPath>
+	<g id="group" transform="scale(1,-1) translate(0,-290)" style="clip-path: url(#clip)">
+		<g transform="">
+			<rect x="0" y="0" width="555" height="290" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<g transform=" matrix(1,0,0,1,20,20)">
+				<rect x="1" y="150" width="150" height="64" rx="5" ry="5" style="stroke: rgb(0%,51%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(90%,95%,90%); fill-rule: evenodd;"/>
+				<text x="39.9351806640625" y="191.486" style="font-family: UI-Bold; font-size: 8.5px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,382) scale(1,-1)">Open - initial stop</text>
+				<text x="50.31572265625" y="181.96599999999998" style="font-family: UI; font-size: 6.8px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,363) scale(1,-1)">SL = entry - 1.2%</text>
+				<text x="43.759765625" y="172.98999999999998" style="font-family: UI; font-size: 6.8px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,345) scale(1,-1)">target = entry + 2.5%</text>
+				<text x="34.1474609375" y="164.01399999999998" style="font-family: UI; font-size: 6.8px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,328) scale(1,-1)">registered + persisted in DB</text>
+				<rect x="183" y="150" width="150" height="64" rx="5" ry="5" style="stroke: rgb(0%,51%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(90%,95%,90%); fill-rule: evenodd;"/>
+				<text x="222.8233642578125" y="191.486" style="font-family: UI-Bold; font-size: 8.5px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,382) scale(1,-1)">Breakeven locked</text>
+				<text x="235.494921875" y="181.96599999999998" style="font-family: UI; font-size: 6.8px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,363) scale(1,-1)">gain &gt;= +0.6%</text>
+				<text x="232.015234375" y="172.98999999999998" style="font-family: UI; font-size: 6.8px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,345) scale(1,-1)">SL raised to entry</text>
+				<text x="221.55126953125" y="164.01399999999998" style="font-family: UI; font-size: 6.8px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,328) scale(1,-1)">trade can no longer lose</text>
+				<rect x="365" y="150" width="150" height="64" rx="5" ry="5" style="stroke: rgb(0%,51%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(90%,95%,90%); fill-rule: evenodd;"/>
+				<text x="424.705810546875" y="191.486" style="font-family: UI-Bold; font-size: 8.5px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,382) scale(1,-1)">Trailing</text>
+				<text x="417.494921875" y="181.96599999999998" style="font-family: UI; font-size: 6.8px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,363) scale(1,-1)">gain &gt;= +1.0%</text>
+				<text x="402.20322265625" y="172.98999999999998" style="font-family: UI; font-size: 6.8px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,345) scale(1,-1)">SL = max(SL, peak x 0.99)</text>
+				<text x="406.42333984375" y="164.01399999999998" style="font-family: UI; font-size: 6.8px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,328) scale(1,-1)">SL only ever moves up</text>
+				<polyline points="151 182, 182 182" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="182 182, 177.5853 184.3474, 177.5853 179.6526" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<rect x="154.9085693359375" y="184.0" width="22.182861328125" height="9.0" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+				<text x="156.9085693359375" y="186.0" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,372) scale(1,-1)">+0.6%</text>
+				<polyline points="333 182, 364 182" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="364 182, 359.5853 184.3474, 359.5853 179.6526" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<rect x="336.9085693359375" y="184.0" width="22.182861328125" height="9.0" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+				<text x="338.9085693359375" y="186.0" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,372) scale(1,-1)">+1.0%</text>
+				<text x="0" y="238" style="font-family: UI-Italic; font-size: 6.8px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,476) scale(1,-1)">Checked every 2 minutes by PositionMonitor (live) / every bar close (backtest) - both call compute_trailed_stop()</text>
+				<rect x="0.0" y="8" width="118.0" height="58" rx="5" ry="5" style="stroke: rgb(81%,23%,23%); stroke-linecap: butt; stroke-width: 1; fill: rgb(98%,91%,91%); fill-rule: evenodd;"/>
+				<text x="44.0703125" y="46.11" style="font-family: UI-Bold; font-size: 8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,92) scale(1,-1)">Stop hit</text>
+				<text x="42.4881591796875" y="37.05" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,74) scale(1,-1)">price &lt;= SL</text>
+				<text x="32.5223388671875" y="28.47" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,56) scale(1,-1)">loss, breakeven, or</text>
+				<text x="36.9117431640625" y="19.89" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,39) scale(1,-1)">locked-in profit</text>
+				<rect x="132.33333333333334" y="8" width="118.0" height="58" rx="5" ry="5" style="stroke: rgb(0%,51%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(90%,95%,90%); fill-rule: evenodd;"/>
+				<text x="172.84309895833334" y="41.82" style="font-family: UI-Bold; font-size: 8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,83) scale(1,-1)">Target hit</text>
+				<text x="159.86324055989584" y="32.76" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,65) scale(1,-1)">price &gt;= entry + 2.5%</text>
+				<text x="169.36250813802084" y="24.18" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,48) scale(1,-1)">full profit taken</text>
+				<rect x="264.6666666666667" y="8" width="118.0" height="58" rx="5" ry="5" style="stroke: rgb(76%,76%,71%); stroke-linecap: butt; stroke-width: 1; fill: rgb(97%,97%,96%); fill-rule: evenodd;"/>
+				<text x="292.5826822916667" y="41.82" style="font-family: UI-Bold; font-size: 8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,83) scale(1,-1)">15:15 square-off</text>
+				<text x="298.4521891276042" y="32.76" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,65) scale(1,-1)">everything closed</text>
+				<text x="302.7003580729167" y="24.18" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,48) scale(1,-1)">before the bell</text>
+				<rect x="397.0" y="8" width="118.0" height="58" rx="5" ry="5" style="stroke: rgb(76%,76%,71%); stroke-linecap: butt; stroke-width: 1; fill: rgb(97%,97%,96%); fill-rule: evenodd;"/>
+				<text x="425.951171875" y="41.82" style="font-family: UI-Bold; font-size: 8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,83) scale(1,-1)">Stale square-off</text>
+				<text x="420.208740234375" y="32.76" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,65) scale(1,-1)">opened on an earlier day</text>
+				<text x="425.2154541015625" y="24.18" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,48) scale(1,-1)">(app was off at 15:15)</text>
+				<path d="M 20,104 L 495,104 Z" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<path d="M 75,150 L 75,104 Z" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<path d="M 257,150 L 257,104 Z" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<path d="M 439,150 L 439,104 Z" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<polyline points="59 104, 59 66" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="59 66, 61.34736 70.41474, 56.65264 70.41474" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<polyline points="191.3333 104, 191.3333 66" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="191.3333 66, 193.6807 70.41474, 188.986 70.41474" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<polyline points="323.6667 104, 323.6667 66" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="323.6667 66, 326.014 70.41474, 321.3193 70.41474" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<polyline points="456 104, 456 66" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="456 66, 458.3474 70.41474, 453.6526 70.41474" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<text x="232.97265625" y="109" style="font-family: UI-Italic; font-size: 6.5px;fill: rgb(53%,52%,50%); stroke:none;" transform="translate(0,218) scale(1,-1)">any state can exit</text>
+			</g>
+		</g>
+	</g>
+</svg>

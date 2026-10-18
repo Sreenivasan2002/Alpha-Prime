@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg
+  PUBLIC '-//W3C//DTD SVG 1.0//EN'
+  'http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd'>
+<svg width="810" height="540" preserveAspectRatio="xMinYMin meet" viewBox="0 0 810 540" xmlns="http://www.w3.org/2000/svg" version="1.0" fill-rule="evenodd" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<title>...</title>
+	<desc>...</desc>
+	<clipPath id="clip">
+		<rect x="0" y="0" width="810" height="540"/>
+	</clipPath>
+	<g id="group" transform="scale(1,-1) translate(0,-540)" style="clip-path: url(#clip)">
+		<g transform="">
+			<rect x="0" y="0" width="810" height="540" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<g transform=" matrix(1,0,0,1,20,20)">
+				<rect x="150" y="424" width="462" height="70" rx="7" ry="7" style="stroke: rgb(29%,22%,65%); stroke-linecap: butt; stroke-width: 1.1; fill: rgb(93%,92%,98%); fill-rule: evenodd;"/>
+				<text x="158" y="482" style="font-family: UI-Bold; font-size: 7px;fill: rgb(29%,22%,65%); stroke:none;" transform="translate(0,964) scale(1,-1)">TRIGGERS</text>
+				<text x="193.06201171875" y="482" style="font-family: UI; font-size: 6.8px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,964) scale(1,-1)">  core/scheduler.py - APScheduler, IST</text>
+				<rect x="158" y="432" width="105" height="42" rx="5" ry="5" style="stroke: rgb(29%,22%,65%); stroke-linecap: butt; stroke-width: 1; fill: rgb(93%,92%,98%); fill-rule: evenodd;"/>
+				<text x="185.505859375" y="457.82" style="font-family: UI-Bold; font-size: 8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,915) scale(1,-1)">Trading cycle</text>
+				<text x="193.2042236328125" y="448.76" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,897) scale(1,-1)">every N min</text>
+				<text x="186.781982421875" y="440.18" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,880) scale(1,-1)">10:00-14:30 only</text>
+				<rect x="271" y="432" width="105" height="42" rx="5" ry="5" style="stroke: rgb(29%,22%,65%); stroke-linecap: butt; stroke-width: 1; fill: rgb(93%,92%,98%); fill-rule: evenodd;"/>
+				<text x="291.779296875" y="457.82" style="font-family: UI-Bold; font-size: 8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,915) scale(1,-1)">Position monitor</text>
+				<text x="306.8834228515625" y="448.76" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,897) scale(1,-1)">every 2 min</text>
+				<text x="302.80029296875" y="440.18" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,880) scale(1,-1)">stops / targets</text>
+				<rect x="384" y="432" width="115" height="42" rx="5" ry="5" style="stroke: rgb(29%,22%,65%); stroke-linecap: butt; stroke-width: 1; fill: rgb(93%,92%,98%); fill-rule: evenodd;"/>
+				<text x="423.62109375" y="457.82" style="font-family: UI-Bold; font-size: 8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,915) scale(1,-1)">Cron jobs</text>
+				<text x="409.5950927734375" y="448.76" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,897) scale(1,-1)">09:00 pre-market scan</text>
+				<text x="398.624755859375" y="440.18" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,880) scale(1,-1)">15:15 square-off, 15:25 review</text>
+				<rect x="507" y="432" width="105" height="42" rx="5" ry="5" style="stroke: rgb(29%,22%,65%); stroke-linecap: butt; stroke-width: 1; fill: rgb(93%,92%,98%); fill-rule: evenodd;"/>
+				<text x="542.890625" y="453.53" style="font-family: UI-Bold; font-size: 8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,907) scale(1,-1)">Run now</text>
+				<text x="524.2943115234375" y="444.46999999999997" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,888) scale(1,-1)">manual, from dashboard</text>
+				<rect x="150" y="302" width="462" height="106" rx="7" ry="7" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 1.1; fill: rgb(91%,94%,98%); fill-rule: evenodd;"/>
+				<text x="158" y="396" style="font-family: UI-Bold; font-size: 7px;fill: rgb(16%,47%,83%); stroke:none;" transform="translate(0,792) scale(1,-1)">AGENT PIPELINE</text>
+				<text x="214.783203125" y="396" style="font-family: UI; font-size: 6.8px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,792) scale(1,-1)">  agents/pipeline.py - LangGraph StateGraph, 6 nodes / 8 LLM agents</text>
+				<rect x="158.0" y="334" width="64.0" height="50" rx="5" ry="5" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 1; fill: rgb(91%,94%,98%); fill-rule: evenodd;"/>
+				<text x="174.157958984375" y="363.534" style="font-family: UI-Bold; font-size: 8.5px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,727) scale(1,-1)">Scanner</text>
+				<text x="174.040625" y="354.414" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,708) scale(1,-1)">top gainers</text>
+				<text x="171.4578125" y="345.966" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,691) scale(1,-1)">+1..5% today</text>
+				<polyline points="223 359, 233.4 359" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.9; fill: None; fill-rule: evenodd;"/>
+				<polygon points="233.4 359, 228.9853 361.3474, 228.9853 356.6526" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<rect x="234.4" y="334" width="63.99999999999997" height="50" rx="5" ry="5" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 1; fill: rgb(91%,94%,98%); fill-rule: evenodd;"/>
+				<text x="251.53537597656248" y="363.534" style="font-family: UI-Bold; font-size: 8.5px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,727) scale(1,-1)">Analyst</text>
+				<text x="253.43593749999997" y="354.414" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,708) scale(1,-1)">5-min TA</text>
+				<text x="250.64843749999997" y="345.966" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,691) scale(1,-1)">save_signal</text>
+				<polyline points="299.4 359, 309.8 359" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.9; fill: None; fill-rule: evenodd;"/>
+				<polygon points="309.8 359, 305.3853 361.3474, 305.3853 356.6526" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<rect x="310.8" y="334" width="64.0" height="50" rx="5" ry="5" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 1; fill: rgb(91%,94%,98%); fill-rule: evenodd;"/>
+				<text x="328.4915283203125" y="363.534" style="font-family: UI-Bold; font-size: 8.5px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,727) scale(1,-1)">Debate</text>
+				<text x="326.71250000000003" y="354.414" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,708) scale(1,-1)">Bull vs Bear</text>
+				<text x="316.2859375" y="345.966" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,691) scale(1,-1)">Judge: GO/NO-GO</text>
+				<polyline points="375.8 359, 386.2 359" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.9; fill: None; fill-rule: evenodd;"/>
+				<polygon points="386.2 359, 381.7853 361.3474, 381.7853 356.6526" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<rect x="387.20000000000005" y="334" width="64.0" height="50" rx="5" ry="5" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 1; fill: rgb(91%,94%,98%); fill-rule: evenodd;"/>
+				<text x="401.40935058593755" y="363.534" style="font-family: UI-Bold; font-size: 8.5px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,727) scale(1,-1)">Risk Mgr</text>
+				<text x="405.584375" y="354.414" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,708) scale(1,-1)">limits, R:R</text>
+				<text x="400.79218750000007" y="345.966" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,691) scale(1,-1)">proposes qty</text>
+				<polyline points="452.2 359, 462.6 359" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.9; fill: None; fill-rule: evenodd;"/>
+				<polygon points="462.6 359, 458.1853 361.3474, 458.1853 356.6526" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<rect x="463.6" y="334" width="64.0" height="50" rx="5" ry="5" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 1; fill: rgb(91%,94%,98%); fill-rule: evenodd;"/>
+				<text x="476.0495849609375" y="363.534" style="font-family: UI-Bold; font-size: 8.5px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,727) scale(1,-1)">Execution</text>
+				<text x="479.453125" y="354.414" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,708) scale(1,-1)">place_trade</text>
+				<text x="477.7421875" y="345.966" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,691) scale(1,-1)">per approval</text>
+				<polyline points="528.6 359, 539 359" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.9; fill: None; fill-rule: evenodd;"/>
+				<polygon points="539 359, 534.5853 361.3474, 534.5853 356.6526" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<rect x="540.0" y="334" width="64.0" height="50" rx="5" ry="5" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 1; fill: rgb(91%,94%,98%); fill-rule: evenodd;"/>
+				<text x="557.726806640625" y="363.534" style="font-family: UI-Bold; font-size: 8.5px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,727) scale(1,-1)">Review</text>
+				<text x="559.7453125" y="354.414" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,708) scale(1,-1)">portfolio</text>
+				<text x="559.0296875" y="345.966" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,691) scale(1,-1)">summary</text>
+				<text x="194.75625" y="314" style="font-family: UI-Italic; font-size: 6.6px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,628) scale(1,-1)">Each node = gpt-4o-mini with bound tools, looping until it stops calling tools.   Skips downstream work when a stage finds nothing.</text>
+				<polyline points="210 424, 210 408" style="stroke: rgb(29%,22%,65%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="210 408, 212.3474 412.4147, 207.6526 412.4147" style="stroke: rgb(29%,22%,65%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(29%,22%,65%); fill-rule: evenodd;"/>
+				<polyline points="559 424, 559 408" style="stroke: rgb(29%,22%,65%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="559 408, 561.3474 412.4147, 556.6526 412.4147" style="stroke: rgb(29%,22%,65%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(29%,22%,65%); fill-rule: evenodd;"/>
+				<rect x="150" y="218" width="462" height="68" rx="7" ry="7" style="stroke: rgb(7%,52%,36%); stroke-linecap: butt; stroke-width: 1.1; fill: rgb(89%,96%,93%); fill-rule: evenodd;"/>
+				<text x="158" y="274" style="font-family: UI-Bold; font-size: 7px;fill: rgb(7%,52%,36%); stroke:none;" transform="translate(0,548) scale(1,-1)">TOOL LAYER</text>
+				<text x="201.27197265625" y="274" style="font-family: UI; font-size: 6.8px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,548) scale(1,-1)">  agents/tools.py - 16 LangChain @tool functions</text>
+				<rect x="158.0" y="226" width="105.5" height="42" rx="5" ry="5" style="stroke: rgb(7%,52%,36%); stroke-linecap: butt; stroke-width: 1; fill: rgb(89%,96%,93%); fill-rule: evenodd;"/>
+				<text x="181.421875" y="251.82" style="font-family: UI-Bold; font-size: 8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,503) scale(1,-1)">Market data (8)</text>
+				<text x="183.9613037109375" y="242.76" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,485) scale(1,-1)">price, info, OHLCV,</text>
+				<text x="186.8653564453125" y="234.17999999999998" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,468) scale(1,-1)">daily + 5-min TA</text>
+				<rect x="271.5" y="226" width="105.5" height="42" rx="5" ry="5" style="stroke: rgb(7%,52%,36%); stroke-linecap: butt; stroke-width: 1; fill: rgb(89%,96%,93%); fill-rule: evenodd;"/>
+				<text x="288.4140625" y="251.82" style="font-family: UI-Bold; font-size: 8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,503) scale(1,-1)">Scanner + news (2)</text>
+				<text x="300.814453125" y="242.76" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,485) scale(1,-1)">get_top_gainers,</text>
+				<text x="291.88330078125" y="234.17999999999998" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,468) scale(1,-1)">check_news_sentiment</text>
+				<rect x="385.0" y="226" width="105.5" height="42" rx="5" ry="5" style="stroke: rgb(7%,52%,36%); stroke-linecap: butt; stroke-width: 1; fill: rgb(89%,96%,93%); fill-rule: evenodd;"/>
+				<text x="418.068359375" y="251.82" style="font-family: UI-Bold; font-size: 8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,503) scale(1,-1)">Signals (2)</text>
+				<text x="421.0477294921875" y="242.76" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,485) scale(1,-1)">save_signal,</text>
+				<text x="411.6278076171875" y="234.17999999999998" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,468) scale(1,-1)">get_recent_signals</text>
+				<rect x="498.5" y="226" width="105.5" height="42" rx="5" ry="5" style="stroke: rgb(7%,52%,36%); stroke-linecap: butt; stroke-width: 1; fill: rgb(89%,96%,93%); fill-rule: evenodd;"/>
+				<text x="530.294921875" y="251.82" style="font-family: UI-Bold; font-size: 8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,503) scale(1,-1)">Trading (4)</text>
+				<text x="520.105224609375" y="242.76" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,485) scale(1,-1)">place_trade, portfolio,</text>
+				<text x="527.785888671875" y="234.17999999999998" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,468) scale(1,-1)">positions, trades</text>
+				<polyline points="381 302, 381 286" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="381 286, 383.3474 290.4147, 378.6526 290.4147" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<text x="386.0" y="291" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,582) scale(1,-1)">tool calls</text>
+				<rect x="150" y="118" width="462" height="84" rx="7" ry="7" style="stroke: rgb(83%,32%,12%); stroke-linecap: butt; stroke-width: 1.1; fill: rgb(99%,93%,90%); fill-rule: evenodd;"/>
+				<text x="158" y="190" style="font-family: UI-Bold; font-size: 7px;fill: rgb(83%,32%,12%); stroke:none;" transform="translate(0,380) scale(1,-1)">CODE-ENFORCED GUARDS</text>
+				<text x="247.96826171875" y="190" style="font-family: UI; font-size: 6.8px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,380) scale(1,-1)">  LLM numbers are never trusted</text>
+				<rect x="158.0" y="148" width="104.0" height="38" rx="5" ry="5" style="stroke: rgb(83%,32%,12%); stroke-linecap: butt; stroke-width: 1; fill: rgb(99%,93%,90%); fill-rule: evenodd;"/>
+				<text x="189.538330078125" y="171.65599999999998" style="font-family: UI-Bold; font-size: 7.8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,343) scale(1,-1)">save_signal</text>
+				<text x="184.4323974609375" y="162.85999999999996" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,325) scale(1,-1)">re-runs TA engine,</text>
+				<text x="179.63818359375" y="154.54399999999995" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,309) scale(1,-1)">uses ENGINE strength</text>
+				<rect x="270.0" y="148" width="104.0" height="38" rx="5" ry="5" style="stroke: rgb(83%,32%,12%); stroke-linecap: butt; stroke-width: 1; fill: rgb(99%,93%,90%); fill-rule: evenodd;"/>
+				<text x="287.907373046875" y="171.65599999999998" style="font-family: UI-Bold; font-size: 7.8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,343) scale(1,-1)">place_trade checks</text>
+				<text x="295.3034423828125" y="162.85999999999996" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,325) scale(1,-1)">window, cooldown,</text>
+				<text x="292.51181640625" y="154.54399999999995" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,309) scale(1,-1)">SL/target, R:R, live TA</text>
+				<rect x="382.0" y="148" width="104.0" height="38" rx="5" ry="5" style="stroke: rgb(83%,32%,12%); stroke-linecap: butt; stroke-width: 1; fill: rgb(99%,93%,90%); fill-rule: evenodd;"/>
+				<text x="398.574365234375" y="171.65599999999998" style="font-family: UI-Bold; font-size: 7.8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,343) scale(1,-1)">_enforce_risk_limits</text>
+				<text x="408.8999755859375" y="162.85999999999996" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,325) scale(1,-1)">daily-loss breaker,</text>
+				<text x="405.3131591796875" y="154.54399999999995" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,309) scale(1,-1)">max positions, sizing</text>
+				<rect x="494.0" y="126" width="110.0" height="60" rx="5" ry="5" style="stroke: rgb(83%,32%,12%); stroke-linecap: butt; stroke-width: 1; fill: rgb(99%,93%,90%); fill-rule: evenodd;"/>
+				<text x="522.609375" y="164.746" style="font-family: Mono-Bold; font-size: 8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,329) scale(1,-1)">core/risk.py</text>
+				<text x="516.8155517578125" y="155.886" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,311) scale(1,-1)">compute_max_quantity</text>
+				<text x="519.127294921875" y="147.57" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,295) scale(1,-1)">compute_trailed_stop</text>
+				<text x="520.9560791015625" y="139.254" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,278) scale(1,-1)">(shared w/ backtest)</text>
+				<text x="160" y="132" style="font-family: UI-Italic; font-size: 6.6px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,264) scale(1,-1)">A BUY passes 11 gates or is rejected with a reason the agent can read.</text>
+				<polyline points="321 218, 321 202" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="321 202, 323.3474 206.4147, 318.6526 206.4147" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<polyline points="493 167, 487 167" style="stroke: rgb(83%,32%,12%); stroke-linecap: butt; stroke-width: 0.8; fill: None; fill-rule: evenodd;"/>
+				<polygon points="487 167, 491.4147 164.6526, 491.4147 169.3474" style="stroke: rgb(83%,32%,12%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(83%,32%,12%); fill-rule: evenodd;"/>
+				<rect x="150" y="30" width="462" height="68" rx="7" ry="7" style="stroke: rgb(0%,51%,0%); stroke-linecap: butt; stroke-width: 1.1; fill: rgb(90%,95%,90%); fill-rule: evenodd;"/>
+				<text x="158" y="86" style="font-family: UI-Bold; font-size: 7px;fill: rgb(0%,51%,0%); stroke:none;" transform="translate(0,172) scale(1,-1)">EXECUTION</text>
+				<text x="198.62646484375" y="86" style="font-family: UI; font-size: 6.8px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,172) scale(1,-1)">  core/broker.py + PositionMonitor</text>
+				<rect x="158" y="38" width="118" height="38" rx="5" ry="5" style="stroke: rgb(0%,51%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(90%,95%,90%); fill-rule: evenodd;"/>
+				<text x="191.792822265625" y="57.498000000000005" style="font-family: UI-Bold; font-size: 7.8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,114) scale(1,-1)">GrowwBroker</text>
+				<text x="183.88193359375" y="48.702000000000005" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,97) scale(1,-1)">live MIS orders, fill price</text>
+				<rect x="284" y="38" width="118" height="38" rx="5" ry="5" style="stroke: rgb(0%,51%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(90%,95%,90%); fill-rule: evenodd;"/>
+				<text x="305.913818359375" y="57.498000000000005" style="font-family: UI-Bold; font-size: 7.8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,114) scale(1,-1)">PaperTradingBroker</text>
+				<text x="307.7701416015625" y="48.702000000000005" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,97) scale(1,-1)">simulated fills, paper P&amp;L</text>
+				<rect x="412" y="38" width="192" height="38" rx="5" ry="5" style="stroke: rgb(0%,51%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(90%,95%,90%); fill-rule: evenodd;"/>
+				<text x="477.98828125" y="61.656000000000006" style="font-family: UI-Bold; font-size: 7.8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,123) scale(1,-1)">PositionMonitor</text>
+				<text x="451.204638671875" y="52.86000000000001" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,105) scale(1,-1)">breakeven lock -&gt; trailing stop -&gt; target;</text>
+				<text x="454.3654052734375" y="44.54400000000001" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,89) scale(1,-1)">15:15 + stale square-off (no overnight)</text>
+				<polyline points="280 118, 280 98" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="280 98, 282.3474 102.4147, 277.6526 102.4147" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<text x="285" y="104" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,208) scale(1,-1)">get_broker()  - paper or live by TRADING_MODE</text>
+				<polyline points="376 432, 376 426, 621 426, 621 57, 612 57" style="stroke: rgb(29%,22%,65%); stroke-linecap: butt; stroke-width: 0.9; fill: None; fill-rule: evenodd; stroke-dasharray: 3, 2;"/>
+				<polygon points="612 57, 616.4147 54.65264, 616.4147 59.34736" style="stroke: rgb(29%,22%,65%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(29%,22%,65%); fill-rule: evenodd;"/>
+				<rect x="150" y="0" width="462" height="22" rx="5" ry="5" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: rgb(94%,93%,92%); fill-rule: evenodd;"/>
+				<text x="160" y="7.5" style="font-family: UI-Bold; font-size: 8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,15) scale(1,-1)">SQLite</text>
+				<text x="194" y="7.5" style="font-family: Mono; font-size: 7.6px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,15) scale(1,-1)">data/alpha_prime.db</text>
+				<text x="400.04365234375" y="7.5" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,15) scale(1,-1)">trades, signals, portfolio, agent_logs, monitored_positions, system_state ...</text>
+				<polyline points="210 30, 210 22" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="210 22, 212.3474 26.41474, 207.6526 26.41474" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<rect x="0" y="212" width="128" height="282" rx="7" ry="7" style="stroke: rgb(53%,52%,50%); stroke-linecap: butt; stroke-width: 1.1; fill: rgb(100%,100%,100%); fill-rule: evenodd; stroke-dasharray: 3, 2;"/>
+				<text x="8" y="482" style="font-family: UI-Bold; font-size: 7px;fill: rgb(53%,52%,50%); stroke:none;" transform="translate(0,964) scale(1,-1)">EXTERNAL SERVICES</text>
+				<rect x="8" y="428" width="112" height="44" rx="5" ry="5" style="stroke: rgb(53%,52%,50%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd; stroke-dasharray: 3, 2;"/>
+				<text x="42.181640625" y="454.704" style="font-family: UI-Bold; font-size: 8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,909) scale(1,-1)">OpenAI API</text>
+				<text x="32.7984375" y="445.744" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,891) scale(1,-1)">gpt-4o-mini: agents +</text>
+				<text x="41.9421875" y="437.29600000000005" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,874) scale(1,-1)">news sentiment</text>
+				<rect x="8" y="368" width="112" height="44" rx="5" ry="5" style="stroke: rgb(53%,52%,50%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd; stroke-dasharray: 3, 2;"/>
+				<text x="48.1015625" y="394.704" style="font-family: UI-Bold; font-size: 8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,789) scale(1,-1)">yfinance</text>
+				<text x="47.2515625" y="385.744" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,771) scale(1,-1)">NSE OHLCV</text>
+				<text x="41.2453125" y="377.29600000000005" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,754) scale(1,-1)">1d + 5-min bars</text>
+				<rect x="8" y="308" width="112" height="44" rx="5" ry="5" style="stroke: rgb(53%,52%,50%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd; stroke-dasharray: 3, 2;"/>
+				<text x="30.912109375" y="330.48" style="font-family: UI-Bold; font-size: 8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,660) scale(1,-1)">Google News RSS</text>
+				<text x="36.8046875" y="321.52000000000004" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,643) scale(1,-1)">headlines per stock</text>
+				<rect x="8" y="232" width="112" height="44" rx="5" ry="5" style="stroke: rgb(53%,52%,50%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd; stroke-dasharray: 3, 2;"/>
+				<text x="31.267578125" y="258.704" style="font-family: UI-Bold; font-size: 8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,517) scale(1,-1)">Groww Trade API</text>
+				<text x="32.0234375" y="249.744" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,499) scale(1,-1)">auth, orders, positions,</text>
+				<text x="37.403125" y="241.296" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,482) scale(1,-1)">margin (live mode)</text>
+				<polyline points="120 450, 148 370" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.8; fill: None; fill-rule: evenodd; stroke-dasharray: 2, 2;"/>
+				<polygon points="148 370, 148.7572 374.9423, 144.326 373.3914" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<polyline points="120 390, 148 262" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.8; fill: None; fill-rule: evenodd; stroke-dasharray: 2, 2;"/>
+				<polygon points="148 262, 149.3497 266.8144, 144.7635 265.8111" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<polyline points="120 330, 148 250" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.8; fill: None; fill-rule: evenodd; stroke-dasharray: 2, 2;"/>
+				<polygon points="148 250, 148.7572 254.9423, 144.326 253.3914" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<polyline points="120 250, 136 250, 136 57, 157 57" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.8; fill: None; fill-rule: evenodd; stroke-dasharray: 2, 2;"/>
+				<polygon points="157 57, 152.5853 59.34736, 152.5853 54.65264" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<rect x="2" y="185.0" width="16" height="9.0" rx="2" ry="2" style="stroke: rgb(29%,22%,65%); stroke-linecap: butt; stroke-width: 1; fill: rgb(93%,92%,98%); fill-rule: evenodd;"/>
+				<text x="24" y="187.0" style="font-family: UI; font-size: 7px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,374) scale(1,-1)">Orchestration</text>
+				<rect x="2" y="172.5" width="16" height="9.0" rx="2" ry="2" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 1; fill: rgb(91%,94%,98%); fill-rule: evenodd;"/>
+				<text x="24" y="174.5" style="font-family: UI; font-size: 7px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,349) scale(1,-1)">LLM agents</text>
+				<rect x="2" y="160.0" width="16" height="9.0" rx="2" ry="2" style="stroke: rgb(7%,52%,36%); stroke-linecap: butt; stroke-width: 1; fill: rgb(89%,96%,93%); fill-rule: evenodd;"/>
+				<text x="24" y="162.0" style="font-family: UI; font-size: 7px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,324) scale(1,-1)">Tools / data access</text>
+				<rect x="2" y="147.5" width="16" height="9.0" rx="2" ry="2" style="stroke: rgb(83%,32%,12%); stroke-linecap: butt; stroke-width: 1; fill: rgb(99%,93%,90%); fill-rule: evenodd;"/>
+				<text x="24" y="149.5" style="font-family: UI; font-size: 7px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,299) scale(1,-1)">Hard-coded safety</text>
+				<rect x="2" y="135.0" width="16" height="9.0" rx="2" ry="2" style="stroke: rgb(0%,51%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(90%,95%,90%); fill-rule: evenodd;"/>
+				<text x="24" y="137.0" style="font-family: UI; font-size: 7px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,274) scale(1,-1)">Execution</text>
+				<rect x="2" y="122.5" width="16" height="9.0" rx="2" ry="2" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: rgb(94%,93%,92%); fill-rule: evenodd;"/>
+				<text x="24" y="124.5" style="font-family: UI; font-size: 7px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,249) scale(1,-1)">Storage</text>
+				<rect x="2" y="110.0" width="16" height="9.0" rx="2" ry="2" style="stroke: rgb(53%,52%,50%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd; stroke-dasharray: 3, 2;"/>
+				<text x="24" y="112.0" style="font-family: UI; font-size: 7px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,224) scale(1,-1)">External service</text>
+				<rect x="2" y="97.5" width="16" height="9.0" rx="2" ry="2" style="stroke: rgb(69%,47%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(99%,95%,87%); fill-rule: evenodd;"/>
+				<text x="24" y="99.5" style="font-family: UI; font-size: 7px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,199) scale(1,-1)">Offline / UI</text>
+				<text x="2" y="84" style="font-family: UI; font-size: 6.5px;fill: rgb(53%,52%,50%); stroke:none;" transform="translate(0,168) scale(1,-1)">Dashed arrow = data or</text>
+				<text x="2" y="75" style="font-family: UI; font-size: 6.5px;fill: rgb(53%,52%,50%); stroke:none;" transform="translate(0,150) scale(1,-1)">network dependency</text>
+				<rect x="634" y="0" width="136" height="494" rx="7" ry="7" style="stroke: rgb(69%,47%,0%); stroke-linecap: butt; stroke-width: 1.1; fill: rgb(99%,95%,87%); fill-rule: evenodd;"/>
+				<text x="642" y="482" style="font-family: UI-Bold; font-size: 7px;fill: rgb(69%,47%,0%); stroke:none;" transform="translate(0,964) scale(1,-1)">OFFLINE + UI</text>
+				<rect x="642" y="400" width="120" height="70" rx="5" ry="5" style="stroke: rgb(69%,47%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(99%,95%,87%); fill-rule: evenodd;"/>
+				<text x="663.751953125" y="443.928" style="font-family: UI-Bold; font-size: 8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,887) scale(1,-1)">Streamlit dashboard</text>
+				<text x="678.98125" y="434.968" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,869) scale(1,-1)">ui/dashboard.py</text>
+				<text x="673.621875" y="426.52000000000004" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,853) scale(1,-1)">positions, P&amp;L, logs,</text>
+				<text x="676.990625" y="418.07200000000006" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,836) scale(1,-1)">settings, Run now</text>
+				<rect x="642" y="318" width="120" height="66" rx="5" ry="5" style="stroke: rgb(69%,47%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(99%,95%,87%); fill-rule: evenodd;"/>
+				<text x="678.595703125" y="359.928" style="font-family: UI-Bold; font-size: 8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,719) scale(1,-1)">Public demo</text>
+				<text x="678.9109375" y="350.968" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,701) scale(1,-1)">streamlit_app.py</text>
+				<text x="673.8109375" y="342.52000000000004" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,685) scale(1,-1)">DEMO_MODE=true,</text>
+				<text x="669.775" y="334.07200000000006" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,668) scale(1,-1)">read-only snapshot DB</text>
+				<rect x="642" y="196" width="120" height="104" rx="5" ry="5" style="stroke: rgb(69%,47%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(99%,95%,87%); fill-rule: evenodd;"/>
+				<text x="682.333984375" y="269.6" style="font-family: UI-Bold; font-size: 8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,539) scale(1,-1)">Backtester</text>
+				<text x="670.2875" y="260.64000000000004" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,521) scale(1,-1)">backtest/backtester.py</text>
+				<text x="675.25" y="252.19200000000004" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,504) scale(1,-1)">replays 5-min bars:</text>
+				<text x="678.76875" y="243.74400000000003" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,487) scale(1,-1)">same TA engine,</text>
+				<text x="674.296875" y="235.29600000000002" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,470) scale(1,-1)">same risk functions,</text>
+				<text x="675.3171875" y="226.848" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,453) scale(1,-1)">net of Indian costs,</text>
+				<text x="682.696875" y="218.4" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,436) scale(1,-1)">no lookahead</text>
+				<rect x="642" y="120" width="120" height="60" rx="5" ry="5" style="stroke: rgb(69%,47%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(99%,95%,87%); fill-rule: evenodd;"/>
+				<text x="680.720703125" y="154.704" style="font-family: UI-Bold; font-size: 8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,309) scale(1,-1)">CLI runners</text>
+				<text x="664.1953125" y="145.744" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,291) scale(1,-1)">run_backtest.py --compare</text>
+				<text x="674.4515625" y="137.296" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,274) scale(1,-1)">run_sweep.py (grid)</text>
+				<rect x="642" y="40" width="120" height="62" rx="5" ry="5" style="stroke: rgb(69%,47%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(99%,95%,87%); fill-rule: evenodd;"/>
+				<text x="688.591796875" y="75.70400000000001" style="font-family: UI-Bold; font-size: 8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,151) scale(1,-1)">Results</text>
+				<text x="672.078125" y="66.744" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,133) scale(1,-1)">backtest_results/*.csv</text>
+				<text x="672.44375" y="58.296" style="font-family: UI; font-size: 6.4px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,116) scale(1,-1)">trades, equity, sweep</text>
+				<polyline points="642 435, 608 435, 608 472" style="stroke: rgb(69%,47%,0%); stroke-linecap: butt; stroke-width: 0.9; fill: None; fill-rule: evenodd; stroke-dasharray: 3, 2;"/>
+				<polygon points="608 472, 605.6526 467.5853, 610.3474 467.5853" style="stroke: rgb(69%,47%,0%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(69%,47%,0%); fill-rule: evenodd;"/>
+				<polyline points="652 400, 652 392, 628 392, 628 11, 612 11" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.8; fill: None; fill-rule: evenodd; stroke-dasharray: 2, 2;"/>
+				<polygon points="612 11, 616.4147 8.652642, 616.4147 13.34736" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<polyline points="604 156, 642 236" style="stroke: rgb(83%,32%,12%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd; stroke-dasharray: 4, 2;"/>
+				<polygon points="642 236, 637.9855 233.0194, 642.2261 231.0051" style="stroke: rgb(83%,32%,12%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(83%,32%,12%); fill-rule: evenodd;"/>
+				<polyline points="702 196, 702 180" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.9; fill: None; fill-rule: evenodd;"/>
+				<polygon points="702 180, 704.3474 184.4147, 699.6526 184.4147" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<polyline points="702 120, 702 102" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.9; fill: None; fill-rule: evenodd;"/>
+				<polygon points="702 102, 704.3474 106.4147, 699.6526 106.4147" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+			</g>
+		</g>
+	</g>
+</svg>

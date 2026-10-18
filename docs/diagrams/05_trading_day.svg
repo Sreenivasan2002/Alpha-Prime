@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg
+  PUBLIC '-//W3C//DTD SVG 1.0//EN'
+  'http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd'>
+<svg width="555" height="215" preserveAspectRatio="xMinYMin meet" viewBox="0 0 555 215" xmlns="http://www.w3.org/2000/svg" version="1.0" fill-rule="evenodd" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<title>...</title>
+	<desc>...</desc>
+	<clipPath id="clip">
+		<rect x="0" y="0" width="555" height="215"/>
+	</clipPath>
+	<g id="group" transform="scale(1,-1) translate(0,-215)" style="clip-path: url(#clip)">
+		<g transform="">
+			<rect x="0" y="0" width="555" height="215" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<g transform=" matrix(1,0,0,1,20,20)">
+				<rect x="37.19230769230769" y="64" width="429.8076923076923" height="12" rx="2" ry="2" style="stroke: rgb(76%,76%,71%); stroke-linecap: butt; stroke-width: 1; fill: rgb(97%,97%,96%); fill-rule: evenodd;"/>
+				<rect x="88.76923076923077" y="64" width="309.46153846153845" height="12" rx="2" ry="2" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 1; fill: rgb(91%,94%,98%); fill-rule: evenodd;"/>
+				<text x="191.11875" y="67.5" style="font-family: UI-Semi; font-size: 6.8px;fill: rgb(16%,47%,83%); stroke:none;" transform="translate(0,135) scale(1,-1)">entry window - new BUYs allowed</text>
+				<path d="M 88.769231,77 L 88.769231,83 Z" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<path d="M 105.961538,77 L 105.961538,83 Z" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<path d="M 123.153846,77 L 123.153846,83 Z" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<path d="M 140.346154,77 L 140.346154,83 Z" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<path d="M 157.538462,77 L 157.538462,83 Z" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<path d="M 174.730769,77 L 174.730769,83 Z" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<path d="M 191.923077,77 L 191.923077,83 Z" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<path d="M 209.115385,77 L 209.115385,83 Z" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<path d="M 226.307692,77 L 226.307692,83 Z" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<path d="M 243.5,77 L 243.5,83 Z" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<path d="M 260.692308,77 L 260.692308,83 Z" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<path d="M 277.884615,77 L 277.884615,83 Z" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<path d="M 295.076923,77 L 295.076923,83 Z" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<path d="M 312.269231,77 L 312.269231,83 Z" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<path d="M 329.461538,77 L 329.461538,83 Z" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<path d="M 346.653846,77 L 346.653846,83 Z" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<path d="M 363.846154,77 L 363.846154,83 Z" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<path d="M 381.038462,77 L 381.038462,83 Z" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<path d="M 398.230769,77 L 398.230769,83 Z" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<text x="92.76923076923077" y="86" style="font-family: UI; font-size: 6.3px;fill: rgb(16%,47%,83%); stroke:none;" transform="translate(0,172) scale(1,-1)">pipeline cycle every N min (ticks = 15 min)</text>
+				<rect x="37.19230769230769" y="46" width="429.8076923076923" height="8" rx="2" ry="2" style="stroke: rgb(0%,51%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(90%,95%,90%); fill-rule: evenodd;"/>
+				<text x="39.48461538461538" y="36" style="font-family: UI; font-size: 6.3px;fill: rgb(0%,51%,0%); stroke:none;" transform="translate(0,72) scale(1,-1)">position monitor every 2 min (stops, targets, stale square-off)</text>
+				<path d="M 20,26 L 20,30 Z" style="stroke: rgb(76%,76%,71%); stroke-linecap: butt; stroke-width: 0.7;"/>
+				<text x="12.28759765625" y="17" style="font-family: UI; font-size: 6.5px;fill: rgb(53%,52%,50%); stroke:none;" transform="translate(0,34) scale(1,-1)">09:00</text>
+				<path d="M 88.769231,26 L 88.769231,30 Z" style="stroke: rgb(76%,76%,71%); stroke-linecap: butt; stroke-width: 0.7;"/>
+				<text x="81.05682842548077" y="17" style="font-family: UI; font-size: 6.5px;fill: rgb(53%,52%,50%); stroke:none;" transform="translate(0,34) scale(1,-1)">10:00</text>
+				<path d="M 157.538462,26 L 157.538462,30 Z" style="stroke: rgb(76%,76%,71%); stroke-linecap: butt; stroke-width: 0.7;"/>
+				<text x="149.82605919471155" y="17" style="font-family: UI; font-size: 6.5px;fill: rgb(53%,52%,50%); stroke:none;" transform="translate(0,34) scale(1,-1)">11:00</text>
+				<path d="M 226.307692,26 L 226.307692,30 Z" style="stroke: rgb(76%,76%,71%); stroke-linecap: butt; stroke-width: 0.7;"/>
+				<text x="218.59528996394232" y="17" style="font-family: UI; font-size: 6.5px;fill: rgb(53%,52%,50%); stroke:none;" transform="translate(0,34) scale(1,-1)">12:00</text>
+				<path d="M 295.076923,26 L 295.076923,30 Z" style="stroke: rgb(76%,76%,71%); stroke-linecap: butt; stroke-width: 0.7;"/>
+				<text x="287.3645207331731" y="17" style="font-family: UI; font-size: 6.5px;fill: rgb(53%,52%,50%); stroke:none;" transform="translate(0,34) scale(1,-1)">13:00</text>
+				<path d="M 363.846154,26 L 363.846154,30 Z" style="stroke: rgb(76%,76%,71%); stroke-linecap: butt; stroke-width: 0.7;"/>
+				<text x="356.13375150240387" y="17" style="font-family: UI; font-size: 6.5px;fill: rgb(53%,52%,50%); stroke:none;" transform="translate(0,34) scale(1,-1)">14:00</text>
+				<path d="M 432.615385,26 L 432.615385,30 Z" style="stroke: rgb(76%,76%,71%); stroke-linecap: butt; stroke-width: 0.7;"/>
+				<text x="424.90298227163464" y="17" style="font-family: UI; font-size: 6.5px;fill: rgb(53%,52%,50%); stroke:none;" transform="translate(0,34) scale(1,-1)">15:00</text>
+				<path d="M 20,28 L 467,28 Z" style="stroke: rgb(76%,76%,71%); stroke-linecap: butt; stroke-width: 0.7;"/>
+				<path d="M 20,76 L 20,150 Z" style="stroke: rgb(29%,22%,65%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<circle cx="20.0" cy="76" r="2.2" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(29%,22%,65%); fill-rule: evenodd;"/>
+				<text x="22.0" y="159" style="font-family: UI-Bold; font-size: 7px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,318) scale(1,-1)">09:00</text>
+				<text x="22.0" y="152" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,304) scale(1,-1)">pre-market scan</text>
+				<path d="M 37.192308,76 L 37.192308,110 Z" style="stroke: rgb(76%,76%,71%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<circle cx="37.19230769230769" cy="76" r="2.2" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(76%,76%,71%); fill-rule: evenodd;"/>
+				<text x="39.19230769230769" y="119" style="font-family: UI-Bold; font-size: 7px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,238) scale(1,-1)">09:15</text>
+				<text x="39.19230769230769" y="112" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,224) scale(1,-1)">NSE opens</text>
+				<path d="M 88.769231,76 L 88.769231,130 Z" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<circle cx="88.76923076923077" cy="76" r="2.2" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(16%,47%,83%); fill-rule: evenodd;"/>
+				<text x="90.76923076923077" y="139" style="font-family: UI-Bold; font-size: 7px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,278) scale(1,-1)">10:00</text>
+				<text x="90.76923076923077" y="132" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,264) scale(1,-1)">window opens</text>
+				<path d="M 398.230769,76 L 398.230769,130 Z" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<circle cx="398.2307692307692" cy="76" r="2.2" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(16%,47%,83%); fill-rule: evenodd;"/>
+				<text x="378.2283278245192" y="139" style="font-family: UI-Bold; font-size: 7px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,278) scale(1,-1)">14:30</text>
+				<text x="358.8652907151442" y="132" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,264) scale(1,-1)">no new BUYs</text>
+				<path d="M 449.807692,76 L 449.807692,150 Z" style="stroke: rgb(83%,32%,12%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<circle cx="449.8076923076923" cy="76" r="2.2" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(83%,32%,12%); fill-rule: evenodd;"/>
+				<text x="429.8052509014423" y="159" style="font-family: UI-Bold; font-size: 7px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,318) scale(1,-1)">15:15</text>
+				<text x="403.3233173076923" y="152" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,304) scale(1,-1)">auto square-off</text>
+				<path d="M 461.269231,76 L 461.269231,130 Z" style="stroke: rgb(29%,22%,65%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<circle cx="461.2692307692308" cy="76" r="2.2" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(29%,22%,65%); fill-rule: evenodd;"/>
+				<text x="463.2692307692308" y="139" style="font-family: UI-Bold; font-size: 7px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,278) scale(1,-1)">15:25</text>
+				<text x="463.2692307692308" y="132" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,264) scale(1,-1)">EOD review</text>
+				<path d="M 467,76 L 467,110 Z" style="stroke: rgb(76%,76%,71%); stroke-linecap: butt; stroke-width: 0.8;"/>
+				<circle cx="467.0" cy="76" r="2.2" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(76%,76%,71%); fill-rule: evenodd;"/>
+				<text x="469.0" y="119" style="font-family: UI-Bold; font-size: 7px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,238) scale(1,-1)">15:30</text>
+				<text x="469.0" y="112" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,224) scale(1,-1)">market close</text>
+			</g>
+		</g>
+	</g>
+</svg>
