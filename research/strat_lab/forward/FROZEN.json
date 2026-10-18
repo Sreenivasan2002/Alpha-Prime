@@ -1,0 +1,12 @@
+{
+  "frozen_at": "2026-10-18T12:57:37+05:30",
+  "forward_start": "2026-10-19",
+  "files": {
+    "research/strat_lab/harness.py": "56d1bc62d124fb6b8a7fa9458fc0db81ee34e6278bbc04e4f8372f0120a58bb0",
+    "research/strat_lab/strategies/index_trend.py": "559364d2db4c3017f81f5f507cca781a2b9f7aacad5e71c0ab54136cf21e6550",
+    "research/strat_lab/strategies/app_current.py": "957545fe1c5c1eca0e9835a2a42f58ac31198ff4ed7a729211a4ecd3e6acbb4d",
+    "alpha_prime/core/costs.py": "44a1bd772dea45bc14c5cec84b736b185ae85bec29a37478de64d67c2565e3ae",
+    "alpha_prime/core/risk.py": "fc35b580e6532e3ac5634a3b65ddf30c92cc4cff7bead9e859a2bb78eefcb870",
+    "alpha_prime/data/technical_analysis.py": "0e2171513bb9aca29b7aa4ec38298199b2f4bed77b1132854e6659cd48cd8d5a"
+  }
+}

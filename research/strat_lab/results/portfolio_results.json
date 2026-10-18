@@ -1,0 +1,1116 @@
+{
+ "baseline": {
+  "train": {
+   "net": -103487.01,
+   "ret_pct": -10.349,
+   "trades": 486,
+   "days": 37,
+   "win_rate": 37.0,
+   "profit_factor": 0.73,
+   "max_dd_pct": 10.95,
+   "t_stat": -1.96,
+   "up_days": 15
+  },
+  "test": {
+   "net": -82078.87,
+   "ret_pct": -8.208,
+   "trades": 295,
+   "days": 23,
+   "win_rate": 40.0,
+   "profit_factor": 0.68,
+   "max_dd_pct": 9.6,
+   "t_stat": -1.67,
+   "up_days": 10
+  }
+ },
+ "solo": {
+  "train": {
+   "regime_momentum": {
+    "net": 3840.22,
+    "ret_pct": 0.384,
+    "trades": 38,
+    "days": 37,
+    "win_rate": 50.0,
+    "profit_factor": 1.27,
+    "max_dd_pct": 0.74,
+    "t_stat": 0.44,
+    "up_days": 7
+   },
+   "orb": {
+    "net": 39868.05,
+    "ret_pct": 3.987,
+    "trades": 183,
+    "days": 37,
+    "win_rate": 52.5,
+    "profit_factor": 1.3,
+    "max_dd_pct": 1.46,
+    "t_stat": 1.23,
+    "up_days": 20
+   },
+   "vwap_reversion": {
+    "net": 1078.28,
+    "ret_pct": 0.108,
+    "trades": 155,
+    "days": 37,
+    "win_rate": 49.0,
+    "profit_factor": 1.02,
+    "max_dd_pct": 0.94,
+    "t_stat": 0.08,
+    "up_days": 18
+   },
+   "gap": {
+    "net": 86587.13,
+    "ret_pct": 8.659,
+    "trades": 159,
+    "days": 37,
+    "win_rate": 59.1,
+    "profit_factor": 1.97,
+    "max_dd_pct": 0.95,
+    "t_stat": 2.66,
+    "up_days": 23
+   },
+   "rs_neutral": {
+    "net": 56445.4,
+    "ret_pct": 5.645,
+    "trades": 132,
+    "days": 37,
+    "win_rate": 51.5,
+    "profit_factor": 1.72,
+    "max_dd_pct": 1.35,
+    "t_stat": 2.28,
+    "up_days": 23
+   },
+   "index_trend": {
+    "net": 37729.44,
+    "ret_pct": 3.773,
+    "trades": 95,
+    "days": 37,
+    "win_rate": 54.7,
+    "profit_factor": 1.68,
+    "max_dd_pct": 1.52,
+    "t_stat": 1.36,
+    "up_days": 11
+   },
+   "low_freq_breakout": {
+    "net": 60968.71,
+    "ret_pct": 6.097,
+    "trades": 54,
+    "days": 37,
+    "win_rate": 70.4,
+    "profit_factor": 3.6,
+    "max_dd_pct": 0.7,
+    "t_stat": 2.78,
+    "up_days": 23
+   }
+  },
+  "test": {
+   "regime_momentum": {
+    "net": -1929.28,
+    "ret_pct": -0.193,
+    "trades": 50,
+    "days": 23,
+    "win_rate": 48.0,
+    "profit_factor": 0.93,
+    "max_dd_pct": 0.84,
+    "t_stat": -0.26,
+    "up_days": 5
+   },
+   "orb": {
+    "net": -41680.89,
+    "ret_pct": -4.168,
+    "trades": 134,
+    "days": 23,
+    "win_rate": 44.0,
+    "profit_factor": 0.74,
+    "max_dd_pct": 5.85,
+    "t_stat": -1.34,
+    "up_days": 8
+   },
+   "vwap_reversion": {
+    "net": -17062.63,
+    "ret_pct": -1.706,
+    "trades": 127,
+    "days": 23,
+    "win_rate": 48.0,
+    "profit_factor": 0.7,
+    "max_dd_pct": 1.6,
+    "t_stat": -1.14,
+    "up_days": 10
+   },
+   "gap": {
+    "net": -25065.9,
+    "ret_pct": -2.507,
+    "trades": 101,
+    "days": 23,
+    "win_rate": 42.6,
+    "profit_factor": 0.76,
+    "max_dd_pct": 3.17,
+    "t_stat": -1.21,
+    "up_days": 7
+   },
+   "rs_neutral": {
+    "net": -8650.64,
+    "ret_pct": -0.865,
+    "trades": 92,
+    "days": 23,
+    "win_rate": 51.1,
+    "profit_factor": 0.9,
+    "max_dd_pct": 1.6,
+    "t_stat": -0.46,
+    "up_days": 10
+   },
+   "index_trend": {
+    "net": 13661.29,
+    "ret_pct": 1.366,
+    "trades": 75,
+    "days": 23,
+    "win_rate": 49.3,
+    "profit_factor": 1.25,
+    "max_dd_pct": 1.84,
+    "t_stat": 0.58,
+    "up_days": 8
+   },
+   "low_freq_breakout": {
+    "net": -30803.22,
+    "ret_pct": -3.08,
+    "trades": 39,
+    "days": 23,
+    "win_rate": 33.3,
+    "profit_factor": 0.4,
+    "max_dd_pct": 3.17,
+    "t_stat": -2.28,
+    "up_days": 7
+   }
+  }
+ },
+ "corr_train": {
+  "regime_momentum": {
+   "regime_momentum": 1.0,
+   "orb": 0.15,
+   "vwap_reversion": 0.01,
+   "gap": -0.09,
+   "rs_neutral": 0.05,
+   "index_trend": 0.04,
+   "low_freq_breakout": 0.13,
+   "app_current": 0.36,
+   "NIFTY_cc%": 0.44
+  },
+  "orb": {
+   "regime_momentum": 0.15,
+   "orb": 1.0,
+   "vwap_reversion": 0.16,
+   "gap": 0.05,
+   "rs_neutral": 0.45,
+   "index_trend": -0.22,
+   "low_freq_breakout": 0.18,
+   "app_current": 0.38,
+   "NIFTY_cc%": 0.07
+  },
+  "vwap_reversion": {
+   "regime_momentum": 0.01,
+   "orb": 0.16,
+   "vwap_reversion": 1.0,
+   "gap": -0.1,
+   "rs_neutral": 0.04,
+   "index_trend": -0.07,
+   "low_freq_breakout": -0.18,
+   "app_current": 0.26,
+   "NIFTY_cc%": -0.02
+  },
+  "gap": {
+   "regime_momentum": -0.09,
+   "orb": 0.05,
+   "vwap_reversion": -0.1,
+   "gap": 1.0,
+   "rs_neutral": 0.26,
+   "index_trend": 0.47,
+   "low_freq_breakout": 0.06,
+   "app_current": -0.09,
+   "NIFTY_cc%": -0.4
+  },
+  "rs_neutral": {
+   "regime_momentum": 0.05,
+   "orb": 0.45,
+   "vwap_reversion": 0.04,
+   "gap": 0.26,
+   "rs_neutral": 1.0,
+   "index_trend": 0.16,
+   "low_freq_breakout": 0.18,
+   "app_current": 0.31,
+   "NIFTY_cc%": 0.08
+  },
+  "index_trend": {
+   "regime_momentum": 0.04,
+   "orb": -0.22,
+   "vwap_reversion": -0.07,
+   "gap": 0.47,
+   "rs_neutral": 0.16,
+   "index_trend": 1.0,
+   "low_freq_breakout": 0.01,
+   "app_current": -0.16,
+   "NIFTY_cc%": -0.2
+  },
+  "low_freq_breakout": {
+   "regime_momentum": 0.13,
+   "orb": 0.18,
+   "vwap_reversion": -0.18,
+   "gap": 0.06,
+   "rs_neutral": 0.18,
+   "index_trend": 0.01,
+   "low_freq_breakout": 1.0,
+   "app_current": 0.22,
+   "NIFTY_cc%": 0.07
+  },
+  "app_current": {
+   "regime_momentum": 0.36,
+   "orb": 0.38,
+   "vwap_reversion": 0.26,
+   "gap": -0.09,
+   "rs_neutral": 0.31,
+   "index_trend": -0.16,
+   "low_freq_breakout": 0.22,
+   "app_current": 1.0,
+   "NIFTY_cc%": 0.29
+  },
+  "NIFTY_cc%": {
+   "regime_momentum": 0.44,
+   "orb": 0.07,
+   "vwap_reversion": -0.02,
+   "gap": -0.4,
+   "rs_neutral": 0.08,
+   "index_trend": -0.2,
+   "low_freq_breakout": 0.07,
+   "app_current": 0.29,
+   "NIFTY_cc%": 1.0
+  }
+ },
+ "corr_test": {
+  "regime_momentum": {
+   "regime_momentum": 1.0,
+   "orb": 0.18,
+   "vwap_reversion": -0.28,
+   "gap": -0.2,
+   "rs_neutral": 0.26,
+   "index_trend": 0.36,
+   "low_freq_breakout": 0.1,
+   "app_current": 0.29,
+   "NIFTY_cc%": 0.12
+  },
+  "orb": {
+   "regime_momentum": 0.18,
+   "orb": 1.0,
+   "vwap_reversion": 0.14,
+   "gap": 0.4,
+   "rs_neutral": 0.35,
+   "index_trend": 0.3,
+   "low_freq_breakout": -0.3,
+   "app_current": -0.09,
+   "NIFTY_cc%": 0.01
+  },
+  "vwap_reversion": {
+   "regime_momentum": -0.28,
+   "orb": 0.14,
+   "vwap_reversion": 1.0,
+   "gap": -0.17,
+   "rs_neutral": -0.44,
+   "index_trend": -0.09,
+   "low_freq_breakout": 0.02,
+   "app_current": -0.34,
+   "NIFTY_cc%": 0.15
+  },
+  "gap": {
+   "regime_momentum": -0.2,
+   "orb": 0.4,
+   "vwap_reversion": -0.17,
+   "gap": 1.0,
+   "rs_neutral": -0.04,
+   "index_trend": 0.01,
+   "low_freq_breakout": -0.14,
+   "app_current": -0.27,
+   "NIFTY_cc%": -0.44
+  },
+  "rs_neutral": {
+   "regime_momentum": 0.26,
+   "orb": 0.35,
+   "vwap_reversion": -0.44,
+   "gap": -0.04,
+   "rs_neutral": 1.0,
+   "index_trend": 0.19,
+   "low_freq_breakout": -0.14,
+   "app_current": 0.24,
+   "NIFTY_cc%": 0.01
+  },
+  "index_trend": {
+   "regime_momentum": 0.36,
+   "orb": 0.3,
+   "vwap_reversion": -0.09,
+   "gap": 0.01,
+   "rs_neutral": 0.19,
+   "index_trend": 1.0,
+   "low_freq_breakout": 0.05,
+   "app_current": 0.03,
+   "NIFTY_cc%": -0.38
+  },
+  "low_freq_breakout": {
+   "regime_momentum": 0.1,
+   "orb": -0.3,
+   "vwap_reversion": 0.02,
+   "gap": -0.14,
+   "rs_neutral": -0.14,
+   "index_trend": 0.05,
+   "low_freq_breakout": 1.0,
+   "app_current": 0.45,
+   "NIFTY_cc%": 0.09
+  },
+  "app_current": {
+   "regime_momentum": 0.29,
+   "orb": -0.09,
+   "vwap_reversion": -0.34,
+   "gap": -0.27,
+   "rs_neutral": 0.24,
+   "index_trend": 0.03,
+   "low_freq_breakout": 0.45,
+   "app_current": 1.0,
+   "NIFTY_cc%": 0.55
+  },
+  "NIFTY_cc%": {
+   "regime_momentum": 0.12,
+   "orb": 0.01,
+   "vwap_reversion": 0.15,
+   "gap": -0.44,
+   "rs_neutral": 0.01,
+   "index_trend": -0.38,
+   "low_freq_breakout": 0.09,
+   "app_current": 0.55,
+   "NIFTY_cc%": 1.0
+  }
+ },
+ "regime_table_train": {
+  "regime_momentum": {
+   "gate": "10:10",
+   "nifty_up": "+118 (9)",
+   "nifty_dn": "+99 (28)",
+   "trend": "-81 (21)",
+   "range": "+347 (16)",
+   "breadth_hi": "+1,233 (7)",
+   "breadth_lo": "-160 (30)"
+  },
+  "orb": {
+   "gate": "09:25",
+   "nifty_up": "+1,222 (11)",
+   "nifty_dn": "+1,017 (26)",
+   "trend": "-227 (14)",
+   "range": "+1,872 (23)",
+   "breadth_hi": "+988 (8)",
+   "breadth_lo": "+1,102 (29)"
+  },
+  "vwap_reversion": {
+   "gate": "13:25",
+   "nifty_up": "-450 (14)",
+   "nifty_dn": "+321 (23)",
+   "trend": "-5 (20)",
+   "range": "+70 (17)",
+   "breadth_hi": "-102 (10)",
+   "breadth_lo": "+78 (27)"
+  },
+  "gap": {
+   "gate": "09:40",
+   "nifty_up": "+1,762 (12)",
+   "nifty_dn": "+2,618 (25)",
+   "trend": "+3,455 (17)",
+   "range": "+1,392 (20)",
+   "breadth_hi": "+3,645 (9)",
+   "breadth_lo": "+1,921 (28)"
+  },
+  "rs_neutral": {
+   "gate": "10:10",
+   "nifty_up": "+1,240 (9)",
+   "nifty_dn": "+1,617 (28)",
+   "trend": "+1,296 (21)",
+   "range": "+1,827 (16)",
+   "breadth_hi": "+2,229 (7)",
+   "breadth_lo": "+1,361 (30)"
+  },
+  "index_trend": {
+   "gate": "10:10",
+   "nifty_up": "+634 (9)",
+   "nifty_dn": "+1,144 (28)",
+   "trend": "+855 (21)",
+   "range": "+1,235 (16)",
+   "breadth_hi": "+2,690 (7)",
+   "breadth_lo": "+630 (30)"
+  },
+  "low_freq_breakout": {
+   "gate": "09:30",
+   "nifty_up": "+1,311 (10)",
+   "nifty_dn": "+1,772 (27)",
+   "trend": "+1,829 (16)",
+   "range": "+1,510 (21)",
+   "breadth_hi": "+1,051 (7)",
+   "breadth_lo": "+1,787 (30)"
+  }
+ },
+ "rg_fit_off": {
+  "regime_momentum": [
+   "trend",
+   "breadth_lo"
+  ],
+  "orb": [
+   "trend"
+  ],
+  "vwap_reversion": [
+   "nifty_up",
+   "trend",
+   "breadth_hi"
+  ],
+  "gap": [],
+  "rs_neutral": [],
+  "index_trend": [],
+  "low_freq_breakout": []
+ },
+ "top_t": [
+  "gap",
+  "rs_neutral",
+  "low_freq_breakout"
+ ],
+ "candidates": [
+  {
+   "name": "EW_all_slices",
+   "components": "regime_momentum, orb, vwap_reversion, gap, rs_neutral, index_trend, low_freq_breakout",
+   "method": "a) equal weight, all 7 audited strategies; slices",
+   "train": {
+    "net": 7096.44,
+    "ret_pct": 0.71,
+    "trades": 809,
+    "days": 37,
+    "win_rate": 46.0,
+    "profit_factor": 1.09,
+    "max_dd_pct": 0.57,
+    "t_stat": 0.66,
+    "up_days": 20,
+    "gross": 53140.35,
+    "costs": 46043.93
+   },
+   "test": {
+    "net": -40860.19,
+    "ret_pct": -4.086,
+    "trades": 612,
+    "days": 23,
+    "win_rate": 38.9,
+    "profit_factor": 0.54,
+    "max_dd_pct": 4.23,
+    "t_stat": -4.56,
+    "up_days": 5,
+    "gross": -6038.14,
+    "costs": 34822.1
+   }
+  },
+  {
+   "name": "EW_all_shared",
+   "components": "regime_momentum, orb, vwap_reversion, gap, rs_neutral, index_trend, low_freq_breakout",
+   "method": "a) equal weight, all 7 audited strategies; shared",
+   "train": {
+    "net": 113005.57,
+    "ret_pct": 11.301,
+    "trades": 423,
+    "days": 37,
+    "win_rate": 51.8,
+    "profit_factor": 1.43,
+    "max_dd_pct": 1.65,
+    "t_stat": 2.44,
+    "up_days": 23,
+    "gross": 162586.98,
+    "costs": 49581.51
+   },
+   "test": {
+    "net": -90498.49,
+    "ret_pct": -9.05,
+    "trades": 279,
+    "days": 23,
+    "win_rate": 41.9,
+    "profit_factor": 0.69,
+    "max_dd_pct": 10.57,
+    "t_stat": -2.06,
+    "up_days": 8,
+    "gross": -57774.8,
+    "costs": 32723.65
+   }
+  },
+  {
+   "name": "TOP_T_slices",
+   "components": "gap, rs_neutral, low_freq_breakout",
+   "method": "b) equal weight, TRAIN daily t-stat >= 2; slices",
+   "train": {
+    "net": 56509.93,
+    "ret_pct": 5.651,
+    "trades": 345,
+    "days": 37,
+    "win_rate": 55.7,
+    "profit_factor": 1.84,
+    "max_dd_pct": 0.32,
+    "t_stat": 3.25,
+    "up_days": 24,
+    "gross": 80727.63,
+    "costs": 24217.67
+   },
+   "test": {
+    "net": -28302.66,
+    "ret_pct": -2.83,
+    "trades": 232,
+    "days": 23,
+    "win_rate": 42.7,
+    "profit_factor": 0.67,
+    "max_dd_pct": 3.07,
+    "t_stat": -3.04,
+    "up_days": 6,
+    "gross": -12004.6,
+    "costs": 16298.1
+   }
+  },
+  {
+   "name": "TOP_T_shared",
+   "components": "gap, rs_neutral, low_freq_breakout",
+   "method": "b) equal weight, TRAIN daily t-stat >= 2; shared",
+   "train": {
+    "net": 171257.83,
+    "ret_pct": 17.126,
+    "trades": 307,
+    "days": 37,
+    "win_rate": 57.7,
+    "profit_factor": 1.99,
+    "max_dd_pct": 0.8,
+    "t_stat": 3.71,
+    "up_days": 25,
+    "gross": 207238.79,
+    "costs": 35981.03
+   },
+   "test": {
+    "net": -64492.39,
+    "ret_pct": -6.449,
+    "trades": 210,
+    "days": 23,
+    "win_rate": 43.8,
+    "profit_factor": 0.71,
+    "max_dd_pct": 7.31,
+    "t_stat": -2.24,
+    "up_days": 7,
+    "gross": -39865.86,
+    "costs": 24626.52
+   }
+  },
+  {
+   "name": "RG_beta_slices",
+   "components": "regime_momentum, orb, vwap_reversion, gap, rs_neutral, index_trend, low_freq_breakout",
+   "method": "c) regime book: beta; slices",
+   "train": {
+    "net": 756.12,
+    "ret_pct": 0.076,
+    "trades": 704,
+    "days": 37,
+    "win_rate": 45.0,
+    "profit_factor": 1.01,
+    "max_dd_pct": 0.79,
+    "t_stat": 0.09,
+    "up_days": 17,
+    "gross": 40827.25,
+    "costs": 40071.15
+   },
+   "active_trades_by_sub": {
+    "train": {
+     "orb": 182,
+     "vwap_reversion": 154,
+     "rs_neutral": 131,
+     "gap": 106,
+     "index_trend": 94,
+     "regime_momentum": 23,
+     "low_freq_breakout": 14
+    },
+    "test": {
+     "orb": 134,
+     "vwap_reversion": 125,
+     "rs_neutral": 91,
+     "index_trend": 73,
+     "regime_momentum": 45,
+     "gap": 31,
+     "low_freq_breakout": 21
+    }
+   },
+   "test": {
+    "net": -31691.01,
+    "ret_pct": -3.169,
+    "trades": 520,
+    "days": 23,
+    "win_rate": 39.0,
+    "profit_factor": 0.57,
+    "max_dd_pct": 3.35,
+    "t_stat": -3.5,
+    "up_days": 5,
+    "gross": -2112.9,
+    "costs": 29578.17
+   }
+  },
+  {
+   "name": "RG_beta_shared",
+   "components": "regime_momentum, orb, vwap_reversion, gap, rs_neutral, index_trend, low_freq_breakout",
+   "method": "c) regime book: beta; shared",
+   "train": {
+    "net": 101136.9,
+    "ret_pct": 10.114,
+    "trades": 413,
+    "days": 37,
+    "win_rate": 52.3,
+    "profit_factor": 1.4,
+    "max_dd_pct": 1.63,
+    "t_stat": 2.36,
+    "up_days": 25,
+    "gross": 149567.03,
+    "costs": 48430.18
+   },
+   "active_trades_by_sub": {
+    "train": {
+     "orb": 137,
+     "gap": 83,
+     "rs_neutral": 79,
+     "vwap_reversion": 62,
+     "index_trend": 29,
+     "regime_momentum": 14,
+     "low_freq_breakout": 9
+    },
+    "test": {
+     "orb": 116,
+     "rs_neutral": 63,
+     "vwap_reversion": 42,
+     "gap": 27,
+     "low_freq_breakout": 15,
+     "regime_momentum": 14,
+     "index_trend": 14
+    }
+   },
+   "test": {
+    "net": -35449.95,
+    "ret_pct": -3.545,
+    "trades": 291,
+    "days": 23,
+    "win_rate": 47.4,
+    "profit_factor": 0.87,
+    "max_dd_pct": 8.14,
+    "t_stat": -0.71,
+    "up_days": 11,
+    "gross": -1335.55,
+    "costs": 34114.42
+   }
+  },
+  {
+   "name": "RG_trend_slices",
+   "components": "regime_momentum, orb, vwap_reversion, gap, rs_neutral, index_trend, low_freq_breakout",
+   "method": "c) regime book: trend; slices",
+   "train": {
+    "net": -3018.8,
+    "ret_pct": -0.302,
+    "trades": 406,
+    "days": 37,
+    "win_rate": 42.4,
+    "profit_factor": 0.93,
+    "max_dd_pct": 0.55,
+    "t_stat": -0.44,
+    "up_days": 15,
+    "gross": 20091.16,
+    "costs": 23109.94
+   },
+   "active_trades_by_sub": {
+    "train": {
+     "vwap_reversion": 81,
+     "gap": 81,
+     "rs_neutral": 75,
+     "orb": 73,
+     "index_trend": 64,
+     "low_freq_breakout": 22,
+     "regime_momentum": 10
+    },
+    "test": {
+     "orb": 98,
+     "rs_neutral": 55,
+     "index_trend": 49,
+     "regime_momentum": 34,
+     "gap": 29,
+     "low_freq_breakout": 27,
+     "vwap_reversion": 17
+    }
+   },
+   "test": {
+    "net": -17667.67,
+    "ret_pct": -1.767,
+    "trades": 309,
+    "days": 23,
+    "win_rate": 41.7,
+    "profit_factor": 0.63,
+    "max_dd_pct": 2.02,
+    "t_stat": -2.46,
+    "up_days": 8,
+    "gross": -83.85,
+    "costs": 17583.88
+   }
+  },
+  {
+   "name": "RG_trend_shared",
+   "components": "regime_momentum, orb, vwap_reversion, gap, rs_neutral, index_trend, low_freq_breakout",
+   "method": "c) regime book: trend; shared",
+   "train": {
+    "net": 54888.14,
+    "ret_pct": 5.489,
+    "trades": 328,
+    "days": 37,
+    "win_rate": 47.9,
+    "profit_factor": 1.26,
+    "max_dd_pct": 1.54,
+    "t_stat": 1.31,
+    "up_days": 20,
+    "gross": 93354.47,
+    "costs": 38466.48
+   },
+   "active_trades_by_sub": {
+    "train": {
+     "gap": 80,
+     "rs_neutral": 67,
+     "orb": 64,
+     "vwap_reversion": 53,
+     "index_trend": 37,
+     "low_freq_breakout": 17,
+     "regime_momentum": 10
+    },
+    "test": {
+     "orb": 89,
+     "rs_neutral": 43,
+     "gap": 30,
+     "low_freq_breakout": 24,
+     "regime_momentum": 13,
+     "index_trend": 12,
+     "vwap_reversion": 8
+    }
+   },
+   "test": {
+    "net": -11758.36,
+    "ret_pct": -1.176,
+    "trades": 219,
+    "days": 23,
+    "win_rate": 51.1,
+    "profit_factor": 0.94,
+    "max_dd_pct": 3.98,
+    "t_stat": -0.36,
+    "up_days": 11,
+    "gross": 13928.37,
+    "costs": 25686.73
+   }
+  },
+  {
+   "name": "RG_fit_slices",
+   "components": "regime_momentum, orb, vwap_reversion, gap, rs_neutral, index_trend, low_freq_breakout",
+   "method": "c) regime book: fit off={'regime_momentum': ['trend', 'breadth_lo'], 'orb': ['trend'], 'vwap_reversion': ['nifty_up', 'trend', 'breadth_hi'], 'gap': [], 'rs_neutral': [], 'index_trend': [], 'low_freq_breakout': []}; slices",
+   "train": {
+    "net": 18324.92,
+    "ret_pct": 1.832,
+    "trades": 591,
+    "days": 37,
+    "win_rate": 49.2,
+    "profit_factor": 1.33,
+    "max_dd_pct": 0.28,
+    "t_stat": 1.75,
+    "up_days": 21,
+    "gross": 51966.3,
+    "costs": 33641.33
+   },
+   "active_trades_by_sub": {
+    "train": {
+     "gap": 156,
+     "rs_neutral": 131,
+     "orb": 109,
+     "index_trend": 94,
+     "low_freq_breakout": 54,
+     "vwap_reversion": 32,
+     "regime_momentum": 15
+    },
+    "test": {
+     "gap": 100,
+     "rs_neutral": 91,
+     "index_trend": 73,
+     "low_freq_breakout": 39,
+     "orb": 36,
+     "regime_momentum": 5
+    }
+   },
+   "test": {
+    "net": -24427.66,
+    "ret_pct": -2.443,
+    "trades": 344,
+    "days": 23,
+    "win_rate": 41.3,
+    "profit_factor": 0.56,
+    "max_dd_pct": 2.6,
+    "t_stat": -3.91,
+    "up_days": 5,
+    "gross": -4854.81,
+    "costs": 19572.87
+   }
+  },
+  {
+   "name": "RG_fit_shared",
+   "components": "regime_momentum, orb, vwap_reversion, gap, rs_neutral, index_trend, low_freq_breakout",
+   "method": "c) regime book: fit off={'regime_momentum': ['trend', 'breadth_lo'], 'orb': ['trend'], 'vwap_reversion': ['nifty_up', 'trend', 'breadth_hi'], 'gap': [], 'rs_neutral': [], 'index_trend': [], 'low_freq_breakout': []}; shared",
+   "train": {
+    "net": 156053.67,
+    "ret_pct": 15.605,
+    "trades": 372,
+    "days": 37,
+    "win_rate": 54.3,
+    "profit_factor": 1.68,
+    "max_dd_pct": 1.07,
+    "t_stat": 2.98,
+    "up_days": 27,
+    "gross": 199639.76,
+    "costs": 43586.11
+   },
+   "active_trades_by_sub": {
+    "train": {
+     "gap": 130,
+     "rs_neutral": 83,
+     "orb": 76,
+     "low_freq_breakout": 35,
+     "index_trend": 28,
+     "regime_momentum": 14,
+     "vwap_reversion": 6
+    },
+    "test": {
+     "gap": 97,
+     "rs_neutral": 63,
+     "low_freq_breakout": 30,
+     "orb": 30,
+     "index_trend": 11
+    }
+   },
+   "test": {
+    "net": -61041.26,
+    "ret_pct": -6.104,
+    "trades": 231,
+    "days": 23,
+    "win_rate": 44.6,
+    "profit_factor": 0.74,
+    "max_dd_pct": 6.78,
+    "t_stat": -2.04,
+    "up_days": 9,
+    "gross": -33954.08,
+    "costs": 27087.17
+   }
+  },
+  {
+   "name": "PERF5_slices",
+   "components": "regime_momentum, orb, vwap_reversion, gap, rs_neutral, index_trend, low_freq_breakout",
+   "method": "c) regime book: perf5; slices",
+   "train": {
+    "net": 13108.51,
+    "ret_pct": 1.311,
+    "trades": 566,
+    "days": 37,
+    "win_rate": 49.1,
+    "profit_factor": 1.26,
+    "max_dd_pct": 0.29,
+    "t_stat": 1.57,
+    "up_days": 23,
+    "gross": 45331.86,
+    "costs": 32223.4
+   },
+   "active_trades_by_sub": {
+    "train": {
+     "orb": 124,
+     "gap": 118,
+     "rs_neutral": 115,
+     "vwap_reversion": 90,
+     "index_trend": 54,
+     "low_freq_breakout": 46,
+     "regime_momentum": 19
+    },
+    "test": {
+     "index_trend": 53,
+     "gap": 38,
+     "regime_momentum": 25,
+     "orb": 25,
+     "rs_neutral": 23,
+     "vwap_reversion": 20,
+     "low_freq_breakout": 9
+    }
+   },
+   "test": {
+    "net": -14961.34,
+    "ret_pct": -1.496,
+    "trades": 193,
+    "days": 23,
+    "win_rate": 38.9,
+    "profit_factor": 0.49,
+    "max_dd_pct": 1.71,
+    "t_stat": -2.41,
+    "up_days": 4,
+    "gross": -3975.93,
+    "costs": 10985.44
+   }
+  },
+  {
+   "name": "PERF5_shared",
+   "components": "regime_momentum, orb, vwap_reversion, gap, rs_neutral, index_trend, low_freq_breakout",
+   "method": "c) regime book: perf5; shared",
+   "train": {
+    "net": 148671.36,
+    "ret_pct": 14.867,
+    "trades": 369,
+    "days": 37,
+    "win_rate": 56.1,
+    "profit_factor": 1.74,
+    "max_dd_pct": 1.28,
+    "t_stat": 3.32,
+    "up_days": 23,
+    "gross": 191939.78,
+    "costs": 43268.5
+   },
+   "active_trades_by_sub": {
+    "train": {
+     "gap": 106,
+     "orb": 94,
+     "rs_neutral": 61,
+     "vwap_reversion": 53,
+     "low_freq_breakout": 29,
+     "regime_momentum": 13,
+     "index_trend": 13
+    },
+    "test": {
+     "index_trend": 41,
+     "gap": 39,
+     "rs_neutral": 24,
+     "orb": 23,
+     "regime_momentum": 17,
+     "vwap_reversion": 14,
+     "low_freq_breakout": 9
+    }
+   },
+   "test": {
+    "net": -53810.86,
+    "ret_pct": -5.381,
+    "trades": 167,
+    "days": 23,
+    "win_rate": 43.7,
+    "profit_factor": 0.67,
+    "max_dd_pct": 6.74,
+    "t_stat": -1.53,
+    "up_days": 9,
+    "gross": -34248.93,
+    "costs": 19561.88
+   }
+  },
+  {
+   "name": "PERF10_slices",
+   "components": "regime_momentum, orb, vwap_reversion, gap, rs_neutral, index_trend, low_freq_breakout",
+   "method": "c) regime book: perf10; slices",
+   "train": {
+    "net": 7355.26,
+    "ret_pct": 0.736,
+    "trades": 605,
+    "days": 37,
+    "win_rate": 46.6,
+    "profit_factor": 1.13,
+    "max_dd_pct": 0.38,
+    "t_stat": 0.81,
+    "up_days": 21,
+    "gross": 41799.34,
+    "costs": 34444.09
+   },
+   "active_trades_by_sub": {
+    "train": {
+     "rs_neutral": 127,
+     "orb": 119,
+     "gap": 110,
+     "vwap_reversion": 107,
+     "index_trend": 74,
+     "low_freq_breakout": 49,
+     "regime_momentum": 19
+    },
+    "test": {
+     "index_trend": 58,
+     "gap": 36,
+     "orb": 20,
+     "regime_momentum": 10,
+     "vwap_reversion": 9,
+     "low_freq_breakout": 9,
+     "rs_neutral": 8
+    }
+   },
+   "test": {
+    "net": -11052.88,
+    "ret_pct": -1.105,
+    "trades": 150,
+    "days": 23,
+    "win_rate": 40.7,
+    "profit_factor": 0.48,
+    "max_dd_pct": 1.19,
+    "t_stat": -3.0,
+    "up_days": 2,
+    "gross": -2511.84,
+    "costs": 8540.97
+   }
+  },
+  {
+   "name": "PERF10_shared",
+   "components": "regime_momentum, orb, vwap_reversion, gap, rs_neutral, index_trend, low_freq_breakout",
+   "method": "c) regime book: perf10; shared",
+   "train": {
+    "net": 113861.84,
+    "ret_pct": 11.386,
+    "trades": 377,
+    "days": 37,
+    "win_rate": 53.6,
+    "profit_factor": 1.5,
+    "max_dd_pct": 1.51,
+    "t_stat": 2.54,
+    "up_days": 22,
+    "gross": 158057.08,
+    "costs": 44195.34
+   },
+   "active_trades_by_sub": {
+    "train": {
+     "gap": 102,
+     "orb": 93,
+     "rs_neutral": 75,
+     "vwap_reversion": 51,
+     "low_freq_breakout": 29,
+     "index_trend": 14,
+     "regime_momentum": 13
+    },
+    "test": {
+     "index_trend": 47,
+     "gap": 33,
+     "orb": 18,
+     "vwap_reversion": 10,
+     "low_freq_breakout": 9,
+     "rs_neutral": 8,
+     "regime_momentum": 7
+    }
+   },
+   "test": {
+    "net": -34942.05,
+    "ret_pct": -3.494,
+    "trades": 132,
+    "days": 23,
+    "win_rate": 43.9,
+    "profit_factor": 0.7,
+    "max_dd_pct": 5.21,
+    "t_stat": -1.16,
+    "up_days": 4,
+    "gross": -19482.55,
+    "costs": 15459.44
+   }
+  }
+ ],
+ "selected": "TOP_T_shared",
+ "positive_on_test": [],
+ "leak_check": null,
+ "linear_scaled_ew": {
+  "train": 40931.03131401584,
+  "test": -15933.037826926131
+ }
+}

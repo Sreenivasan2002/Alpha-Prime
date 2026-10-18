@@ -1,0 +1,88 @@
+== 1. Baseline (strategies.app_current) ==
+  train: {'net': -103487.01, 'ret_pct': -10.349, 'trades': 486, 'days': 37, 'win_rate': 37.0, 'profit_factor': 0.73, 'max_dd_pct': 10.95, 't_stat': -1.96, 'up_days': 15}
+  test: {'net': -82078.87, 'ret_pct': -8.208, 'trades': 295, 'days': 23, 'win_rate': 40.0, 'profit_factor': 0.68, 'max_dd_pct': 9.6, 't_stat': -1.67, 'up_days': 10}
+== 2. Stand-alone sub-strategies (full capital) ==
+  regime_momentum    TRAIN {'net': 3840.22, 'ret_pct': 0.384, 'trades': 38, 'days': 37, 'win_rate': 50.0, 'profit_factor': 1.27, 'max_dd_pct': 0.74, 't_stat': 0.44, 'up_days': 7}
+                     TEST  {'net': -1929.28, 'ret_pct': -0.193, 'trades': 50, 'days': 23, 'win_rate': 48.0, 'profit_factor': 0.93, 'max_dd_pct': 0.84, 't_stat': -0.26, 'up_days': 5}
+  orb                TRAIN {'net': 39868.05, 'ret_pct': 3.987, 'trades': 183, 'days': 37, 'win_rate': 52.5, 'profit_factor': 1.3, 'max_dd_pct': 1.46, 't_stat': 1.23, 'up_days': 20}
+                     TEST  {'net': -41680.89, 'ret_pct': -4.168, 'trades': 134, 'days': 23, 'win_rate': 44.0, 'profit_factor': 0.74, 'max_dd_pct': 5.85, 't_stat': -1.34, 'up_days': 8}
+  vwap_reversion     TRAIN {'net': 1078.28, 'ret_pct': 0.108, 'trades': 155, 'days': 37, 'win_rate': 49.0, 'profit_factor': 1.02, 'max_dd_pct': 0.94, 't_stat': 0.08, 'up_days': 18}
+                     TEST  {'net': -17062.63, 'ret_pct': -1.706, 'trades': 127, 'days': 23, 'win_rate': 48.0, 'profit_factor': 0.7, 'max_dd_pct': 1.6, 't_stat': -1.14, 'up_days': 10}
+  gap                TRAIN {'net': 86587.13, 'ret_pct': 8.659, 'trades': 159, 'days': 37, 'win_rate': 59.1, 'profit_factor': 1.97, 'max_dd_pct': 0.95, 't_stat': 2.66, 'up_days': 23}
+                     TEST  {'net': -25065.9, 'ret_pct': -2.507, 'trades': 101, 'days': 23, 'win_rate': 42.6, 'profit_factor': 0.76, 'max_dd_pct': 3.17, 't_stat': -1.21, 'up_days': 7}
+  rs_neutral         TRAIN {'net': 56445.4, 'ret_pct': 5.645, 'trades': 132, 'days': 37, 'win_rate': 51.5, 'profit_factor': 1.72, 'max_dd_pct': 1.35, 't_stat': 2.28, 'up_days': 23}
+                     TEST  {'net': -8650.64, 'ret_pct': -0.865, 'trades': 92, 'days': 23, 'win_rate': 51.1, 'profit_factor': 0.9, 'max_dd_pct': 1.6, 't_stat': -0.46, 'up_days': 10}
+  index_trend        TRAIN {'net': 37729.44, 'ret_pct': 3.773, 'trades': 95, 'days': 37, 'win_rate': 54.7, 'profit_factor': 1.68, 'max_dd_pct': 1.52, 't_stat': 1.36, 'up_days': 11}
+                     TEST  {'net': 13661.29, 'ret_pct': 1.366, 'trades': 75, 'days': 23, 'win_rate': 49.3, 'profit_factor': 1.25, 'max_dd_pct': 1.84, 't_stat': 0.58, 'up_days': 8}
+  low_freq_breakout  TRAIN {'net': 60968.71, 'ret_pct': 6.097, 'trades': 54, 'days': 37, 'win_rate': 70.4, 'profit_factor': 3.6, 'max_dd_pct': 0.7, 't_stat': 2.78, 'up_days': 23}
+                     TEST  {'net': -30803.22, 'ret_pct': -3.08, 'trades': 39, 'days': 23, 'win_rate': 33.3, 'profit_factor': 0.4, 'max_dd_pct': 3.17, 't_stat': -2.28, 'up_days': 7}
+  TRAIN daily P&L correlation:
+                   regime_momentum   orb  vwap_reversion   gap  rs_neutral  index_trend  low_freq_breakout  app_current  NIFTY_cc%
+regime_momentum               1.00  0.15            0.01 -0.09        0.05         0.04               0.13         0.36       0.44
+orb                           0.15  1.00            0.16  0.05        0.45        -0.22               0.18         0.38       0.07
+vwap_reversion                0.01  0.16            1.00 -0.10        0.04        -0.07              -0.18         0.26      -0.02
+gap                          -0.09  0.05           -0.10  1.00        0.26         0.47               0.06        -0.09      -0.40
+rs_neutral                    0.05  0.45            0.04  0.26        1.00         0.16               0.18         0.31       0.08
+index_trend                   0.04 -0.22           -0.07  0.47        0.16         1.00               0.01        -0.16      -0.20
+low_freq_breakout             0.13  0.18           -0.18  0.06        0.18         0.01               1.00         0.22       0.07
+app_current                   0.36  0.38            0.26 -0.09        0.31        -0.16               0.22         1.00       0.29
+NIFTY_cc%                     0.44  0.07           -0.02 -0.40        0.08        -0.20               0.07         0.29       1.00
+  (TEST correlation, for reference only):
+                   regime_momentum   orb  vwap_reversion   gap  rs_neutral  index_trend  low_freq_breakout  app_current  NIFTY_cc%
+regime_momentum               1.00  0.18           -0.28 -0.20        0.26         0.36               0.10         0.29       0.12
+orb                           0.18  1.00            0.14  0.40        0.35         0.30              -0.30        -0.09       0.01
+vwap_reversion               -0.28  0.14            1.00 -0.17       -0.44        -0.09               0.02        -0.34       0.15
+gap                          -0.20  0.40           -0.17  1.00       -0.04         0.01              -0.14        -0.27      -0.44
+rs_neutral                    0.26  0.35           -0.44 -0.04        1.00         0.19              -0.14         0.24       0.01
+index_trend                   0.36  0.30           -0.09  0.01        0.19         1.00               0.05         0.03      -0.38
+low_freq_breakout             0.10 -0.30            0.02 -0.14       -0.14         0.05               1.00         0.45       0.09
+app_current                   0.29 -0.09           -0.34 -0.27        0.24         0.03               0.45         1.00       0.55
+NIFTY_cc%                     0.12  0.01            0.15 -0.44        0.01        -0.38               0.09         0.55       1.00
+  TRAIN mean pairwise corr among subs: +0.083 (min -0.22, max +0.47)
+  TRAIN regime table (mean stand-alone daily net P&L, (n days), by market state at each sub's gate):
+                    gate     nifty_up     nifty_dn        trend        range  breadth_hi   breadth_lo
+sub                                                                                                  
+regime_momentum    10:10     +118 (9)     +99 (28)     -81 (21)    +347 (16)  +1,233 (7)    -160 (30)
+orb                09:25  +1,222 (11)  +1,017 (26)    -227 (14)  +1,872 (23)    +988 (8)  +1,102 (29)
+vwap_reversion     13:25    -450 (14)    +321 (23)      -5 (20)     +70 (17)   -102 (10)     +78 (27)
+gap                09:40  +1,762 (12)  +2,618 (25)  +3,455 (17)  +1,392 (20)  +3,645 (9)  +1,921 (28)
+rs_neutral         10:10   +1,240 (9)  +1,617 (28)  +1,296 (21)  +1,827 (16)  +2,229 (7)  +1,361 (30)
+index_trend        10:10     +634 (9)  +1,144 (28)    +855 (21)  +1,235 (16)  +2,690 (7)    +630 (30)
+low_freq_breakout  09:30  +1,311 (10)  +1,772 (27)  +1,829 (16)  +1,510 (21)  +1,051 (7)  +1,787 (30)
+  RG_fit switch-off buckets (TRAIN mean <= 0, >= 5 days): {'regime_momentum': ['trend', 'breadth_lo'], 'orb': ['trend'], 'vwap_reversion': ['nifty_up', 'trend', 'breadth_hi'], 'gap': [], 'rs_neutral': [], 'index_trend': [], 'low_freq_breakout': []}
+== 3. Candidates ==  TOP_T (TRAIN t >= 2): ['gap', 'rs_neutral', 'low_freq_breakout']
+  EW_all_slices        TRAIN net       7,096 t 0.66 PF 1.09 | TEST net     -40,860 t -4.56 PF 0.54  (108s)
+  EW_all_shared        TRAIN net     113,006 t 2.44 PF 1.43 | TEST net     -90,498 t -2.06 PF 0.69  (69s)
+  TOP_T_slices         TRAIN net      56,510 t 3.25 PF 1.84 | TEST net     -28,303 t -3.04 PF 0.67  (48s)
+  TOP_T_shared         TRAIN net     171,258 t 3.71 PF 1.99 | TEST net     -64,492 t -2.24 PF 0.71  (39s)
+  RG_beta_slices       TRAIN net         756 t 0.09 PF 1.01 | TEST net     -31,691 t -3.5 PF 0.57  (97s)
+  RG_beta_shared       TRAIN net     101,137 t 2.36 PF 1.4 | TEST net     -35,450 t -0.71 PF 0.87  (67s)
+  RG_trend_slices      TRAIN net      -3,019 t -0.44 PF 0.93 | TEST net     -17,668 t -2.46 PF 0.63  (94s)
+  RG_trend_shared      TRAIN net      54,888 t 1.31 PF 1.26 | TEST net     -11,758 t -0.36 PF 0.94  (67s)
+  RG_fit_slices        TRAIN net      18,325 t 1.75 PF 1.33 | TEST net     -24,428 t -3.91 PF 0.56  (73s)
+  RG_fit_shared        TRAIN net     156,054 t 2.98 PF 1.68 | TEST net     -61,041 t -2.04 PF 0.74  (48s)
+  PERF5_slices         TRAIN net      13,109 t 1.57 PF 1.26 | TEST net     -14,961 t -2.41 PF 0.49  (116s)
+  PERF5_shared         TRAIN net     148,671 t 3.32 PF 1.74 | TEST net     -53,811 t -1.53 PF 0.67  (48s)
+  PERF10_slices        TRAIN net       7,355 t 0.81 PF 1.13 | TEST net     -11,053 t -3.0 PF 0.48  (77s)
+  PERF10_shared        TRAIN net     113,862 t 2.54 PF 1.5 | TEST net     -34,942 t -1.16 PF 0.7  (60s)
+== 4. Selection (TRAIN daily t-stat, PF > 1) ==
+  TRAIN-selected: TOP_T_shared
+  candidates positive on TEST: []
+                    tr_net  tr_t_stat  tr_profit_factor  tr_max_dd_pct  tr_costs    te_net  te_t_stat  te_profit_factor  te_max_dd_pct  te_costs
+name                                                                                                                                            
+EW_all_slices      7096.44       0.66              1.09           0.57  46043.93 -40860.19      -4.56              0.54           4.23  34822.10
+EW_all_shared    113005.57       2.44              1.43           1.65  49581.51 -90498.49      -2.06              0.69          10.57  32723.65
+TOP_T_slices      56509.93       3.25              1.84           0.32  24217.67 -28302.66      -3.04              0.67           3.07  16298.10
+TOP_T_shared     171257.83       3.71              1.99           0.80  35981.03 -64492.39      -2.24              0.71           7.31  24626.52
+RG_beta_slices      756.12       0.09              1.01           0.79  40071.15 -31691.01      -3.50              0.57           3.35  29578.17
+RG_beta_shared   101136.90       2.36              1.40           1.63  48430.18 -35449.95      -0.71              0.87           8.14  34114.42
+RG_trend_slices   -3018.80      -0.44              0.93           0.55  23109.94 -17667.67      -2.46              0.63           2.02  17583.88
+RG_trend_shared   54888.14       1.31              1.26           1.54  38466.48 -11758.36      -0.36              0.94           3.98  25686.73
+RG_fit_slices     18324.92       1.75              1.33           0.28  33641.33 -24427.66      -3.91              0.56           2.60  19572.87
+RG_fit_shared    156053.67       2.98              1.68           1.07  43586.11 -61041.26      -2.04              0.74           6.78  27087.17
+PERF5_slices      13108.51       1.57              1.26           0.29  32223.40 -14961.34      -2.41              0.49           1.71  10985.44
+PERF5_shared     148671.36       3.32              1.74           1.28  43268.50 -53810.86      -1.53              0.67           6.74  19561.88
+PERF10_slices      7355.26       0.81              1.13           0.38  34444.09 -11052.88      -3.00              0.48           1.19   8540.97
+PERF10_shared    113861.84       2.54              1.50           1.51  44195.34 -34942.05      -1.16              0.70           5.21  15459.44
+  linear-scaled EW_all (cost-free scaling, NOT achievable): TRAIN 40,931  TEST -15,933
+wrote results/portfolio_results.json and results/portfolio_daily.csv  (1315s)
