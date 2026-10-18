@@ -21,8 +21,28 @@ from alpha_prime.core.database import (
     log_agent_activity, set_system_state, get_system_state
 )
 from alpha_prime.data.market_data import market_data, clean_symbol
+from alpha_prime.core.costs import intraday_round_trip_cost
 
 IST = pytz.timezone("Asia/Kolkata")
+
+_nifty_cache = {"t": 0.0, "px": None}
+
+
+def _nifty_level() -> Optional[float]:
+    """NIFTY 50 level at (about) the moment of a fill, cached 30s. Instrumentation only:
+    lets the daily report measure the market's move over each holding window."""
+    import time
+    if _nifty_cache["px"] and time.time() - _nifty_cache["t"] < 30:
+        return _nifty_cache["px"]
+    try:
+        import yfinance as yf
+        px = getattr(yf.Ticker("^NSEI").fast_info, "last_price", None)
+        if px and px > 0:
+            _nifty_cache.update(t=time.time(), px=round(float(px), 2))
+            return _nifty_cache["px"]
+    except Exception as e:
+        logger.debug(f"NIFTY level unavailable: {e}")
+    return None
 
 
 class PaperTradingBroker:
@@ -56,7 +76,8 @@ class PaperTradingBroker:
     def place_order(self, symbol: str, action: str, quantity: int,
                     order_type: str = "MARKET", price: float = None,
                     stop_loss: float = None, target: float = None,
-                    rationale: str = "", agent_name: str = "") -> Dict:
+                    rationale: str = "", agent_name: str = "",
+                    ref_price: float = None) -> Dict:
         """Place a paper trade order"""
         symbol = clean_symbol(symbol)
         try:
@@ -71,6 +92,8 @@ class PaperTradingBroker:
             return {"status": "FAILED", "error": f"Could not get price for {symbol}"}
 
         realized_pnl = 0.0
+        gross_pnl = 0.0
+        charges = 0.0
 
         if action.upper() == "BUY":
             total_cost = current_price * quantity
@@ -110,7 +133,11 @@ class PaperTradingBroker:
             sell_value = current_price * quantity
             avg_buy = self.positions[symbol]["avg_price"]
             # Realized P&L for this sell (FIFO/average-cost): (exit - avg_entry) * qty
-            realized_pnl = (current_price - avg_buy) * quantity
+            gross_pnl = (current_price - avg_buy) * quantity
+            # Deduct the round trip's brokerage/STT/GST etc. so paper P&L is NET, like a real account
+            charges = (intraday_round_trip_cost(avg_buy * quantity, sell_value)
+                       if settings.trading.paper_include_charges else 0.0)
+            realized_pnl = gross_pnl - charges
 
             self.positions[symbol]["quantity"] -= quantity
             self.positions[symbol]["invested"] -= avg_buy * quantity
@@ -118,7 +145,7 @@ class PaperTradingBroker:
             if self.positions[symbol]["quantity"] == 0:
                 del self.positions[symbol]
 
-            self.available_cash += sell_value
+            self.available_cash += sell_value - charges
         else:
             return {"status": "FAILED", "error": f"Unknown action: {action}"}
 
@@ -131,6 +158,10 @@ class PaperTradingBroker:
             status="EXECUTED",
             trading_mode="paper",
             pnl=realized_pnl,
+            ref_price=ref_price,
+            nifty_price=_nifty_level(),
+            charges=round(charges, 2) if action.upper() == "SELL" else None,
+            gross_pnl=round(gross_pnl, 2) if action.upper() == "SELL" else None,
         )
 
         result = {
@@ -142,6 +173,8 @@ class PaperTradingBroker:
             "price": current_price,
             "total_value": current_price * quantity,
             "realized_pnl": round(realized_pnl, 2),
+            "gross_pnl": round(gross_pnl, 2),
+            "charges": round(charges, 2),
             "available_cash": round(self.available_cash, 2),
             "mode": "PAPER"
         }
@@ -317,7 +350,8 @@ class GrowwBroker:
     def place_order(self, symbol: str, action: str, quantity: int,
                     order_type: str = "MARKET", price: float = None,
                     stop_loss: float = None, target: float = None,
-                    rationale: str = "", agent_name: str = "") -> Dict:
+                    rationale: str = "", agent_name: str = "",
+                    ref_price: float = None) -> Dict:
         """Place a live order via Groww API"""
         self._ensure_client()
         symbol = clean_symbol(symbol)
@@ -435,6 +469,8 @@ class GrowwBroker:
                 order_id=str(order_id), status=order_status,
                 trading_mode="live",
                 pnl=realized_pnl,
+                ref_price=ref_price,
+                nifty_price=_nifty_level(),
             )
 
             result = {

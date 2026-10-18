@@ -16,13 +16,16 @@ from alpha_prime.core.config import settings
 from alpha_prime.core.risk import compute_trailed_stop
 from alpha_prime.core.database import (
     log_agent_activity, set_system_state, get_system_state,
-    save_monitored_position, remove_monitored_position, get_monitored_positions
+    save_monitored_position, remove_monitored_position, get_monitored_positions,
+    count_today_entries,
 )
 from alpha_prime.core.broker import set_day_start_if_needed, get_today_pnl_pct
 from alpha_prime.data.market_data import is_market_open, is_pre_market, is_trading_window, market_data
 from alpha_prime.agents.pipeline import run_full_pipeline, run_portfolio_review
+from alpha_prime.agents.tools import begin_trading_cycle
 
 IST = pytz.timezone("Asia/Kolkata")
+SCHEDULER_LOCK_PORT = 47651  # single-instance lock, see TradingScheduler.start()
 
 
 class PositionMonitor:
@@ -230,12 +233,32 @@ class TradingScheduler:
         self._running = False
         self._pipeline_lock = threading.Lock()
         self._last_run = None
+        self._instance_lock = None
 
     def start(self):
         """Start the scheduler with all jobs"""
         if self._running:
             logger.warning("Scheduler already running")
             return
+
+        # Only ONE scheduler may trade at a time, across ALL processes. Two schedulers
+        # (e.g. run_trading.py plus the dashboard's Start button) each keep their own
+        # in-memory positions, so each thinks the other's shares don't exist - one bought
+        # ADANIPOWER twice. Holding a localhost port is a lock the OS frees when the
+        # process dies, so a crash can never leave it stuck.
+        if self._instance_lock is None:
+            import socket
+            lock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            try:
+                lock.bind(("127.0.0.1", SCHEDULER_LOCK_PORT))
+                lock.listen(1)
+            except OSError:
+                lock.close()
+                raise RuntimeError(
+                    "Another Alpha-Prime scheduler is already running (run_trading.py or the "
+                    "dashboard). Stop it first - two schedulers would trade the same account twice."
+                )
+            self._instance_lock = lock
 
         # If scheduler was previously shutdown, create a fresh one
         try:
@@ -246,10 +269,17 @@ class TradingScheduler:
 
         interval = settings.market.analysis_interval_minutes
 
-        # Main trading job - runs every N minutes during market hours
+        # Main trading job - runs every N minutes during market hours.
+        # Aligned to the clock (e.g. 10:00, 10:15, ...) when N divides 60. A plain
+        # interval counts from start-up, so starting at 09:14 with N=15 fired at 09:59
+        # (skipped, pre-window) and first traded at 10:14.
+        if 0 < interval <= 60 and 60 % interval == 0:
+            cycle_trigger = CronTrigger(minute=f"*/{interval}", hour="9-15", day_of_week="mon-fri", timezone=IST)
+        else:
+            cycle_trigger = IntervalTrigger(minutes=interval, timezone=IST)
         self.scheduler.add_job(
             self._run_trading_cycle,
-            IntervalTrigger(minutes=interval, timezone=IST),
+            cycle_trigger,
             id="trading_cycle",
             name="Trading Cycle",
             replace_existing=True,
@@ -441,7 +471,8 @@ class TradingScheduler:
                         quantity=qty,
                         rationale=f"Auto-{reason.lower().replace('_', ' ')}: "
                                   f"price={price:.2f}, P&L={signal['pnl_pct']:+.2f}%",
-                        agent_name="position_monitor"
+                        agent_name="position_monitor",
+                        ref_price=price,
                     )
                     logger.info(f"[AutoSell] {symbol} result: {result.get('status')}")
                     log_agent_activity(
@@ -502,6 +533,7 @@ class TradingScheduler:
                     symbol=symbol,
                     action="SELL",
                     quantity=qty,
+                    ref_price=current_price or None,
                     rationale=f"EOD auto square-off at 3:15 PM. "
                               f"Entry={entry_price:.2f}, Exit={current_price:.2f}, "
                               f"P&L=Rs.{pnl:+.2f}",
@@ -587,6 +619,16 @@ class TradingScheduler:
                 log_agent_activity("scheduler", "skip", f"Daily loss limit -{loss_limit_pct}% hit, P&L={today_pnl_pct:.2f}%")
                 return
 
+            entries_today = count_today_entries(settings.trading.mode)
+            if entries_today >= settings.trading.max_trades_per_day:
+                logger.info(
+                    f"Daily trade cap reached ({entries_today}/{settings.trading.max_trades_per_day} "
+                    "entries). Skipping the pipeline; the position monitor still manages exits."
+                )
+                set_system_state("last_cycle_status", "skipped_daily_trade_cap")
+                return
+
+            begin_trading_cycle(now.strftime("%Y-%m-%d %H:%M"))
             logger.info(f"Starting trading cycle at {now.strftime('%H:%M:%S')} IST (today P&L: {today_pnl_pct:+.2f}%)")
             set_system_state("last_cycle_start", now.isoformat())
             log_agent_activity("scheduler", "cycle_start",
@@ -663,6 +705,14 @@ class TradingScheduler:
 
     def run_now(self):
         """Manually trigger a trading cycle (bypasses trading window check since user explicitly asked)"""
+        # Only the process that owns the running scheduler may trade. A manual cycle in any other
+        # process (e.g. the dashboard while run_trading.py is running) keeps its own copy of the
+        # positions: on 7 Oct 2026 that bought CANBK/KOTAKBANK twice and left one lot unsold.
+        if not self._running:
+            msg = ("Refused: no scheduler is running in this process. Trading runs in run_trading.py "
+                   "(start_experiment.bat); a manual cycle from here would create positions it cannot see.")
+            logger.warning(msg)
+            return msg
         logger.info("Manual trading cycle triggered by user")
         thread = threading.Thread(target=self._run_trading_cycle_manual, daemon=True)
         thread.start()
@@ -703,6 +753,7 @@ class TradingScheduler:
 
         try:
             set_day_start_if_needed()
+            begin_trading_cycle("manual " + now.strftime("%Y-%m-%d %H:%M"))
             logger.info(f"Starting MANUAL trading cycle at {now.strftime('%H:%M:%S')} IST")
             set_system_state("last_cycle_start", now.isoformat())
             log_agent_activity("scheduler", "manual_cycle_start",

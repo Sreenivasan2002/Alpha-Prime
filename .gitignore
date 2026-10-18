@@ -38,3 +38,9 @@ Autonomous traders/
 
 # Build artifacts
 requirements-lock.txt
+
+# Research data caches (Yahoo 5-min bars, ~20MB; rebuilt locally) and daily outputs
+research/strat_lab/*.pkl
+research/strat_lab/forward/*.pkl
+research/strat_lab/forward/*.csv
+data/validation/

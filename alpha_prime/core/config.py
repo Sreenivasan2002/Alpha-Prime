@@ -43,6 +43,15 @@ class TradingConfig(BaseSettings):
     # buying power). Bounds overnight-gap exposure on one name regardless of leverage.
     max_position_size_pct: float = Field(default=25.0, alias="MAX_POSITION_SIZE_PCT")
     max_open_positions: int = Field(default=3, alias="MAX_OPEN_POSITIONS")
+    # === Turnover / exposure caps (enforced in CODE; see research/strat_lab/results/critique.md) ===
+    # The signal showed no edge, so every trade is mostly cost: cap BUY entries per day
+    # (top-ups count; each BUY pays a round trip of charges).
+    max_trades_per_day: int = Field(default=3, alias="MAX_TRADES_PER_DAY")
+    # Total notional of all open positions as a % of REAL capital. 100 = Rs.10L on Rs.10L even
+    # though 5x margin allows Rs.50L. Caps how much the book loses per 1% NIFTY move.
+    max_gross_exposure_pct: float = Field(default=100.0, alias="MAX_GROSS_EXPOSURE_PCT")
+    # New BUY entries allowed per scan cycle - stops the 10:00 burst of correlated longs.
+    max_entries_per_cycle: int = Field(default=1, alias="MAX_ENTRIES_PER_CYCLE")
     default_stop_loss_pct: float = Field(default=0.8, alias="DEFAULT_STOP_LOSS_PCT")
     default_target_pct: float = Field(default=1.2, alias="DEFAULT_TARGET_PCT")
     capital: float = Field(default=10000.0, alias="TRADING_CAPITAL")
@@ -64,6 +73,11 @@ class TradingConfig(BaseSettings):
     trail_arm_pct: float = Field(default=1.0, alias="TRAIL_ARM_PCT")
     # Once armed, trail the stop this far below the peak price.
     trailing_stop_pct: float = Field(default=1.0, alias="TRAILING_STOP_PCT")
+    # Deduct realistic brokerage/STT/GST etc. from paper-trade P&L (see core/costs.py)
+    paper_include_charges: bool = Field(default=True, alias="PAPER_INCLUDE_CHARGES")
+    # True: a Judge NO-GO blocks the trade. False: the debate is ADVISORY only - it is still run and
+    # logged, but the risk manager decides; every code-enforced risk limit still applies.
+    debate_veto: bool = Field(default=True, alias="DEBATE_VETO")
     # Minimum signal strength (0-1) to consider a BUY
     # For intraday 5-min data, typical BUY strengths are 0.10-0.35
     # The engine already requires: signal=BUY + trend=BULLISH + volume_confirmed

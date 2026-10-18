@@ -179,7 +179,7 @@ class MarketDataEngine:
             "TECHM", "BAJAJFINSV", "HDFCLIFE", "DIVISLAB", "DRREDDY",
             "SBILIFE", "GRASIM", "CIPLA", "COALINDIA", "BRITANNIA",
             "BPCL", "EICHERMOT", "INDUSINDBK", "TATACONSUM", "APOLLOHOSP",
-            "HEROMOTOCO", "BAJAJ-AUTO", "UPL", "HINDALCO", "LTIM"
+            "HEROMOTOCO", "BAJAJ-AUTO", "UPL", "HINDALCO", "LTM"
         ]
 
     def get_banknifty_stocks(self) -> List[str]:
@@ -203,7 +203,7 @@ class MarketDataEngine:
             "NHPC", "PFC", "PIDILITIND", "PNB", "POLYCAB",
             "RECLTD", "SBICARD", "SHREECEM", "SIEMENS", "SRF",
             "TATAPOWER", "TORNTPHARM", "TRENT", "UNITDSPR", "VEDL",
-            "VBL", "YESBANK", "ZOMATO", "ZYDUSLIFE", "HAL"
+            "VBL", "YESBANK", "ETERNAL", "ZYDUSLIFE", "HAL"
         ]
         return nifty50 + next50
 

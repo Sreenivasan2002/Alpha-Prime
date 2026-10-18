@@ -129,6 +129,9 @@ def place_trade(symbol: str, action: str, quantity: int,
         return json.dumps({"status": "REJECTED",
                            "error": f"Quantity must be >= 1 (got {quantity})."})
 
+    # Price the decision was made at (fill vs this = measured slippage, logged per trade)
+    ref_price = None
+
     # === HARD-CODED TRADE VALIDATION (last line of defense) ===
     if action.upper() == "BUY":
         # -1. Trading window check — no new BUYs outside 10:00-14:30
@@ -177,6 +180,7 @@ def place_trade(symbol: str, action: str, quantity: int,
         try:
             current_price = market_data.get_live_price(symbol)
             if current_price and current_price > 0:
+                ref_price = current_price
                 target_pct = (target - current_price) / current_price * 100
                 sl_pct = (current_price - stop_loss) / current_price * 100
 
@@ -258,8 +262,11 @@ def place_trade(symbol: str, action: str, quantity: int,
         stop_loss=stop_loss if stop_loss > 0 else None,
         target=target if target > 0 else None,
         rationale=rationale,
-        agent_name="trading_agent"
+        agent_name="trading_agent",
+        ref_price=ref_price,
     )
+    if action.upper() == "BUY" and result.get("status") in ("EXECUTED", "PLACED"):
+        _record_cycle_entry()
 
     # Auto-register BUY positions with the position monitor for trailing SL
     if action.upper() == "BUY" and result.get("status") in ("EXECUTED", "PLACED"):
@@ -553,6 +560,22 @@ def _check_stock_cooldown(symbol_clean: str) -> bool:
     return False
 
 
+# New BUY entries made in the current scan cycle. The scheduler calls begin_trading_cycle()
+# before each pipeline run; outside a scheduler (a one-off script) the whole process counts
+# as one cycle.
+_cycle_state = {"id": None, "entries": 0}
+
+
+def begin_trading_cycle(cycle_id: str) -> None:
+    """Reset the per-cycle entry counter (called by the scheduler before each pipeline run)."""
+    _cycle_state["id"] = cycle_id
+    _cycle_state["entries"] = 0
+
+
+def _record_cycle_entry() -> None:
+    _cycle_state["entries"] += 1
+
+
 def _enforce_risk_limits(symbol_clean: str, stop_loss: float, requested_qty: int) -> dict:
     """Code-enforced risk gate for BUY orders — does NOT trust LLM arithmetic.
 
@@ -560,6 +583,8 @@ def _enforce_risk_limits(symbol_clean: str, stop_loss: float, requested_qty: int
       0. Quantity sanity: must be a positive integer (a negative qty would create a
          SHORT and CREDIT cash in the broker).
       1. Daily-loss circuit breaker: block ALL new BUYs if today's P&L <= -max_daily_loss_pct.
+      1b. Turnover: at most max_trades_per_day BUY entries per day (top-ups count) and
+          max_entries_per_cycle per scan cycle (no burst of correlated longs at 10:00).
       2. Max open positions: block a NEW symbol once we hold max_open_positions.
       3. Position sizing on the TOTAL (existing + new) position, then subtract what
          we already hold so repeated top-ups can't stack past the cap:
@@ -567,6 +592,8 @@ def _enforce_risk_limits(symbol_clean: str, stop_loss: float, requested_qty: int
            total_qty * entry            <= capital * max_position_size_pct/100    (notional)
          Both caps use REAL capital (not margin buying power) so a single position's
          loss-at-stop AND overnight-gap exposure stay bounded regardless of leverage.
+      4. Gross exposure: open notional + new <= capital * max_gross_exposure_pct/100
+         (caps the book's market beta; 5x margin is NOT used for more exposure).
 
     Returns {"ok": bool, "quantity": int, "reason": str, "note": str}.
     """
@@ -597,6 +624,22 @@ def _enforce_risk_limits(symbol_clean: str, stop_loss: float, requested_qty: int
     except Exception as e:
         logger.warning(f"[risk] Daily P&L check failed (continuing): {e}")
 
+    # 1b. Turnover caps. Fail CLOSED: if today's count can't be read, don't trade.
+    if _cycle_state["entries"] >= t.max_entries_per_cycle:
+        return {"ok": False, "quantity": 0, "note": "",
+                "reason": (f"Max {t.max_entries_per_cycle} new BUY entry(ies) per scan cycle "
+                           f"reached. No more BUYs until the next cycle.")}
+    try:
+        from alpha_prime.core.database import count_today_entries
+        entries_today = count_today_entries(t.mode)
+    except Exception as e:
+        return {"ok": False, "quantity": 0, "note": "",
+                "reason": f"Could not count today's entries ({e}); refusing BUY to stay within the daily cap."}
+    if entries_today >= t.max_trades_per_day:
+        return {"ok": False, "quantity": 0, "note": "",
+                "reason": (f"Daily trade cap reached: {entries_today} BUY entries today "
+                           f"(max {t.max_trades_per_day}). No new BUY trades today.")}
+
     # Need a reliable current price to size the position
     current_price = market_data.get_live_price(symbol_clean)
     if not current_price or current_price <= 0:
@@ -619,7 +662,17 @@ def _enforce_risk_limits(symbol_clean: str, stop_loss: float, requested_qty: int
                     "reason": (f"Max open positions ({t.max_open_positions}) reached. "
                                f"Cannot open a new position in {symbol_clean}.")}
     except Exception as e:
-        logger.warning(f"[risk] Open-positions check failed (continuing): {e}")
+        # Fail CLOSED: without the positions we can't check the position or exposure caps.
+        return {"ok": False, "quantity": 0, "note": "",
+                "reason": f"Could not read open positions ({e}); refusing BUY."}
+
+    # Gross notional already open (current value, falling back to quantity * avg price)
+    gross_open = 0.0
+    for p in positions.values():
+        val = p.get("current_value")
+        if not val:
+            val = (p.get("quantity", 0) or 0) * (p.get("avg_price", 0) or 0)
+        gross_open += float(val or 0)
 
     # 3. Position sizing — caps are on the TOTAL position; subtract what we hold.
     #    Uses the shared pure sizing function (same logic the backtester runs).
@@ -634,6 +687,16 @@ def _enforce_risk_limits(symbol_clean: str, stop_loss: float, requested_qty: int
         return {"ok": False, "quantity": 0, "note": "",
                 "reason": (f"{symbol_clean}: already hold {held_qty} share(s); total cap "
                            f"{max_total_qty} ({binding}) reached — no room to add.")}
+
+    # 4. Gross exposure cap on REAL capital
+    gross_cap = t.capital * t.max_gross_exposure_pct / 100
+    exposure_qty = int((gross_cap - gross_open) // current_price)
+    if exposure_qty < 1:
+        return {"ok": False, "quantity": 0, "note": "",
+                "reason": (f"Gross exposure cap reached: Rs.{gross_open:,.0f} open of "
+                           f"Rs.{gross_cap:,.0f} allowed ({t.max_gross_exposure_pct:g}% of capital).")}
+    if exposure_qty < max_new_qty:
+        max_new_qty, binding = exposure_qty, "gross_exposure"
 
     final_qty = min(requested_qty, max_new_qty)
     note = ("capped by {b} (total cap {tc}, held {h}, max new {mn} @ {p:.2f})".format(

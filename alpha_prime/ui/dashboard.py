@@ -580,8 +580,11 @@ def render_sidebar():
         if st.button("Run Pipeline NOW", width="stretch",
                     type="secondary", help="Manually trigger one trading cycle"):
             with st.spinner("Running AI trading pipeline..."):
-                trading_scheduler.run_now()
-            st.success("Pipeline triggered!")
+                result = trading_scheduler.run_now()
+            if str(result).startswith("Refused"):
+                st.error(result)
+            else:
+                st.success("Pipeline triggered!")
 
         if st.button("Square Off ALL Positions", width="stretch",
                     help="Sell all intraday positions immediately"):
@@ -641,6 +644,11 @@ def render_portfolio_tab():
         error_msg = ""
     else:
         try:
+            # The paper broker keeps positions in memory and loads them from the DB only when
+            # created. Trades are placed by the scheduler in a different process, so rebuild it
+            # on every render to show them.
+            if settings.trading.mode == "paper":
+                reset_broker()
             broker = get_broker()
             summary = broker.get_portfolio_summary()
             error_msg = summary.get("error", "")

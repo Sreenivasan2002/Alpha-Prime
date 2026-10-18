@@ -68,6 +68,10 @@ class BacktestConfig:
     trading_end: tuple = field(default_factory=lambda: (settings.market.trading_end_hour, settings.market.trading_end_minute))
     squareoff: tuple = (15, 15)
 
+    # Mirror the live scanner (get_top_gainers): only consider stocks currently up between
+    # (min%, max%) versus the previous session's close. None = consider every stock.
+    gain_filter: Optional[tuple] = None
+
     lookback_bars: int = 150  # bars of history fed to the TA engine per decision
 
     # --- Transaction costs (Indian intraday equity / MIS), all as fractions ---
@@ -125,6 +129,7 @@ class BacktestResult:
     symbols: List[str]
     bars_scanned: int
     duration_sec: float
+    snapshots: dict = field(default_factory=dict)  # {date: {'HH:MM': day P&L}}
 
 
 class Backtester:
@@ -218,7 +223,8 @@ class Backtester:
             raise ValueError("No usable data loaded for any symbol.")
         return self.simulate(data)
 
-    def simulate(self, data: Dict[str, pd.DataFrame], cfg: Optional[BacktestConfig] = None) -> BacktestResult:
+    def simulate(self, data: Dict[str, pd.DataFrame], cfg: Optional[BacktestConfig] = None,
+                 start_date=None, end_date=None, snapshot_times=None) -> BacktestResult:
         """Run the simulation. `cfg` overrides exit/sizing/cost settings (for sweeps);
         entry SIGNALS always come from self.cfg via the memoised cache."""
         t0 = time.time()
@@ -227,19 +233,34 @@ class Backtester:
         prev_cfg = self.cfg
         self.cfg = run_cfg
         try:
-            result = self._simulate_impl(data, run_cfg)
+            result = self._simulate_impl(data, run_cfg, start_date, end_date, snapshot_times)
         finally:
             self.cfg = prev_cfg
         result.duration_sec = round(time.time() - t0, 1)
         return result
 
-    def _simulate_impl(self, data: Dict[str, pd.DataFrame], cfg: BacktestConfig) -> BacktestResult:
+    def _simulate_impl(self, data: Dict[str, pd.DataFrame], cfg: BacktestConfig,
+                       start_date=None, end_date=None, snapshot_times=None) -> BacktestResult:
         iloc_map = {s: {ts: i for i, ts in enumerate(df.index)} for s, df in data.items()}
         last_iloc_of_day = {}
         for s, df in data.items():
             for i, d in enumerate(df["_date"].values):
                 last_iloc_of_day[(s, d)] = i
         timeline = sorted(set().union(*[set(df.index) for df in data.values()]))
+        # Trade only inside [start_date, end_date]; earlier bars still feed the indicators.
+        if start_date is not None:
+            timeline = [t for t in timeline if t.date() >= start_date]
+        if end_date is not None:
+            timeline = [t for t in timeline if t.date() <= end_date]
+        # previous session close per (symbol, date), for the top-gainer filter
+        prev_close = {}
+        for s_, df_ in data.items():
+            closes = df_.groupby("_date")["Close"].last()
+            dates_ = list(closes.index)
+            for k in range(1, len(dates_)):
+                prev_close[(s_, dates_[k])] = float(closes.iloc[k - 1])
+        snaps = {}
+        snap_mins = [(lbl, int(lbl[:2]) * 60 + int(lbl[3:])) for lbl in (snapshot_times or [])]
 
         cash_used = 0.0
         realized_total = 0.0
@@ -357,6 +378,11 @@ class Backtester:
                     if qty < 1:
                         continue
 
+                    if cfg.gain_filter is not None:
+                        pc = prev_close.get((sym, d))
+                        last_px = float(data[sym].iloc[iloc - 1].Close)  # last completed bar: no lookahead
+                        if not pc or not (cfg.gain_filter[0] <= (last_px - pc) / pc * 100 <= cfg.gain_filter[1]):
+                            continue
                     if not self._entry_signal(data[sym], iloc, sym):
                         continue
 
@@ -366,6 +392,16 @@ class Backtester:
                     )
                     cash_used += entry_price * qty
 
+            if snap_mins:
+                unreal = 0.0
+                for sym_, pos_ in open_positions.items():
+                    il = iloc_map[sym_].get(ts)
+                    if il is not None:
+                        unreal += (float(data[sym_].iloc[il].Close) - pos_.entry_price) * pos_.qty
+                for lbl, tm in snap_mins:
+                    if minutes + 5 <= tm:   # bar ends at or before this clock time
+                        snaps.setdefault(str(d), {})[lbl] = round(day_realized + unreal, 2)
+
         if cur_day is not None:
             equity_curve.append({"date": str(cur_day), "equity": round(cfg.capital + realized_total, 2)})
 
@@ -373,7 +409,7 @@ class Backtester:
         metrics = self._metrics(trades, equity_curve, cfg)
         return BacktestResult(
             config=cfg, trades=trades, equity_curve=equity_curve, metrics=metrics,
-            symbols=list(data.keys()), bars_scanned=bars_scanned, duration_sec=0.0,
+            symbols=list(data.keys()), bars_scanned=bars_scanned, duration_sec=0.0, snapshots=snaps,
         )
 
     # ---- metrics ----

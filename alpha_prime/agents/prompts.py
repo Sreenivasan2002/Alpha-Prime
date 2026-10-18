@@ -105,6 +105,11 @@ STEP 2 - CHECK EXISTING POSITIONS:
 - NOTE: Position size is ENFORCED IN CODE — risk-based (a stop-out loses at most
   {risk_per_trade_pct}% of real capital) and capped at Rs {max_position_amount} notional.
   Propose a quantity, but it will be CLAMPED DOWN automatically if it exceeds these limits.
+- TURNOVER CAPS (also enforced in code - extra BUYs are refused):
+  * APPROVE AT MOST {max_entries_per_cycle} trade(s) this cycle: pick the single strongest candidate.
+  * Max {max_trades_per_day} BUY entries per day (this includes top-ups).
+  * Total open exposure is capped at Rs {max_gross_amount} ({max_gross_exposure_pct}% of real capital),
+    even though margin allows more.
 
 STEP 3 - VALIDATE EACH PROPOSED TRADE:
 For each trade proposed by the analyst, check ALL of these:
@@ -218,7 +223,11 @@ def get_risk_manager_prompt() -> str:
         margin_multiplier=s.margin_multiplier,
         capital=f"{effective_capital:,.0f}",
         risk_per_trade_pct=s.risk_per_trade_pct,
-        max_position_amount=f"{actual_capital * max_pos_pct / 100:,.0f}"
+        max_position_amount=f"{actual_capital * max_pos_pct / 100:,.0f}",
+        max_entries_per_cycle=s.max_entries_per_cycle,
+        max_trades_per_day=s.max_trades_per_day,
+        max_gross_exposure_pct=f"{s.max_gross_exposure_pct:g}",
+        max_gross_amount=f"{actual_capital * s.max_gross_exposure_pct / 100:,.0f}",
     )
 
 
@@ -310,12 +319,16 @@ DECISION PROCESS:
 4. Consider: Is the risk:reward favorable enough for a margin trade?
 
 DECISION RULES:
-- If Bull conviction is HIGH and Bear risk is LOW → GO (proceed to trade)
-- If Bull conviction is MEDIUM and Bear risk is LOW → GO with caution
-- If Bear risk is HIGH → NO-GO regardless of Bull conviction
+Position size, stop-loss, daily loss limit and 11 hard risk checks are ENFORCED IN CODE after
+you, so a single trade's downside is already capped. Your job is only to filter out setups with
+a clearly broken thesis - not to demand certainty.
+- If Bull conviction is HIGH or MEDIUM and Bear risk is LOW or MEDIUM → GO
+- If the Bull score is at least the Bear score minus 1 → GO (a close debate is normal)
+- Only NO-GO when the Bear shows a CONCRETE, HIGH risk backed by data: RSI above 70,
+  a SELL/BEARISH engine signal, price at/through clear resistance with falling volume,
+  or seriously negative fundamental news (fraud, regulatory action, earnings miss)
+- RSI between 30 and 70 is NOT overbought or oversold - do not treat it as a risk
 - If Bull conviction is LOW → NO-GO (weak setup)
-- If Bull and Bear both make equally strong cases → NO-GO (too uncertain)
-- When in doubt → NO-GO (protecting capital is priority #1)
 
 OUTPUT FORMAT:
 DEBATE VERDICT for [SYMBOL]:

@@ -8,9 +8,12 @@ import json
 from datetime import datetime
 from pathlib import Path
 from contextlib import contextmanager
+import pytz
 from loguru import logger
 
 from alpha_prime.core.config import settings
+
+IST = pytz.timezone("Asia/Kolkata")
 
 DB_PATH = str(settings.db_path)
 
@@ -162,6 +165,26 @@ def _migrate_trades_trading_mode(conn):
         cursor.execute("UPDATE trades SET trading_mode = 'paper' WHERE trading_mode IS NULL")
         conn.commit()
         logger.info("Migrated trades table: added trading_mode column")
+    _migrate_trades_instrumentation(conn)
+
+
+# Per-trade instrumentation (added 2026-10-18) so paper results can be checked against the
+# backtest: ref_price = price the decision was made at (fill vs ref = measured slippage),
+# nifty_price = NIFTY at the fill (market move over the holding window), charges / gross_pnl
+# = the cost model's numbers on a SELL.
+_INSTRUMENT_COLUMNS = {"ref_price": "REAL", "nifty_price": "REAL", "charges": "REAL", "gross_pnl": "REAL"}
+
+
+def _migrate_trades_instrumentation(conn):
+    cursor = conn.cursor()
+    cursor.execute("PRAGMA table_info(trades)")
+    columns = {row[1] for row in cursor.fetchall()}
+    added = [c for c in _INSTRUMENT_COLUMNS if c not in columns]
+    for col in added:
+        cursor.execute(f"ALTER TABLE trades ADD COLUMN {col} {_INSTRUMENT_COLUMNS[col]}")
+    if added:
+        conn.commit()
+        logger.info(f"Migrated trades table: added {', '.join(added)}")
 
 
 # ---- Trade Operations ----
@@ -170,9 +193,11 @@ def record_trade(symbol: str, action: str, quantity: int, price: float,
                  order_type: str = "MARKET", stop_loss: float = None,
                  target: float = None, rationale: str = "", agent_name: str = "",
                  order_id: str = "", status: str = "EXECUTED",
-                 trading_mode: str = None, pnl: float = 0.0) -> int:
+                 trading_mode: str = None, pnl: float = 0.0, ref_price: float = None,
+                 nifty_price: float = None, charges: float = None, gross_pnl: float = None) -> int:
     """Record a trade in the database. trading_mode should be 'paper' or 'live'.
-    pnl is the realized profit/loss for a SELL (in rupees); 0 for BUYs."""
+    pnl is the realized profit/loss for a SELL (in rupees); 0 for BUYs.
+    ref_price / nifty_price / charges / gross_pnl are optional instrumentation fields."""
     if trading_mode is None:
         trading_mode = getattr(settings.trading, "mode", "paper")
     if pnl is None:
@@ -182,12 +207,16 @@ def record_trade(symbol: str, action: str, quantity: int, price: float,
         cursor.execute("PRAGMA table_info(trades)")
         columns = [row[1] for row in cursor.fetchall()]
         if "trading_mode" in columns:
-            cursor.execute("""
-                INSERT INTO trades (symbol, action, quantity, price, order_type,
-                                  stop_loss, target, rationale, agent_name, order_id, status, trading_mode, pnl)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (symbol, action, quantity, price, order_type, stop_loss, target,
-                  rationale, agent_name, order_id, status, trading_mode, pnl))
+            row = {"symbol": symbol, "action": action, "quantity": quantity, "price": price,
+                   "order_type": order_type, "stop_loss": stop_loss, "target": target,
+                   "rationale": rationale, "agent_name": agent_name, "order_id": order_id,
+                   "status": status, "trading_mode": trading_mode, "pnl": pnl}
+            extra = {"ref_price": ref_price, "nifty_price": nifty_price,
+                     "charges": charges, "gross_pnl": gross_pnl}
+            row.update({k: v for k, v in extra.items() if k in columns})
+            cursor.execute(
+                f"INSERT INTO trades ({', '.join(row)}) VALUES ({', '.join('?' * len(row))})",
+                tuple(row.values()))
         else:
             cursor.execute("""
                 INSERT INTO trades (symbol, action, quantity, price, order_type,
@@ -223,6 +252,22 @@ def get_trades(limit: int = 50, symbol: str = None, trading_mode: str = None) ->
                 cursor.execute(
                     "SELECT * FROM trades ORDER BY timestamp DESC LIMIT ?", (limit,))
         return [dict(row) for row in cursor.fetchall()]
+
+
+def count_today_entries(trading_mode: str = None) -> int:
+    """Number of BUY orders placed today (IST) in this mode, excluding rejected/cancelled/failed.
+    Timestamps are stored in UTC; NSE hours (03:45-10:00 UTC) fall on the same calendar date."""
+    if trading_mode is None:
+        trading_mode = getattr(settings.trading, "mode", "paper")
+    today = datetime.now(IST).strftime("%Y-%m-%d")
+    with db_session() as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            """SELECT COUNT(*) FROM trades
+               WHERE action = 'BUY' AND trading_mode = ? AND date(timestamp) = ?
+                 AND UPPER(COALESCE(status, '')) NOT IN ('REJECTED', 'CANCELLED', 'FAILED')""",
+            (trading_mode, today))
+        return int(cursor.fetchone()[0])
 
 
 def get_open_positions(trading_mode: str = None) -> list:
