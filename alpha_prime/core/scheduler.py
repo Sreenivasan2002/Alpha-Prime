@@ -72,24 +72,32 @@ class PositionMonitor:
         except Exception as e:
             logger.warning(f"[PositionMonitor] Could not persist {symbol}: {e}")
 
+    def is_monitored(self, symbol: str) -> bool:
+        with self._lock:
+            return symbol in self._peak_prices
+
     def register_position(self, symbol: str, entry_price: float,
                           stop_loss: float = 0, target: float = 0):
-        """Register a new position for monitoring"""
+        """Register a position for monitoring.
+
+        If the symbol is already monitored (a top-up), the entry becomes the new average
+        price but the peak, a stop that has already been raised and the existing target are
+        kept: a top-up used to reset the peak and could LOWER the stop."""
         with self._lock:
-            self._peak_prices[symbol] = entry_price
-            self._entry_prices[symbol] = entry_price
-            if stop_loss > 0:
-                self._stop_losses[symbol] = stop_loss
-            else:
+            if stop_loss <= 0:
                 # Default SL from config (1.2% = gives room for normal fluctuation)
-                sl_pct = settings.trading.default_stop_loss_pct / 100
-                self._stop_losses[symbol] = entry_price * (1 - sl_pct)
-            if target > 0:
-                self._targets[symbol] = target
+                stop_loss = entry_price * (1 - settings.trading.default_stop_loss_pct / 100)
+            if target <= 0:
+                target = entry_price * (1 + settings.trading.default_target_pct / 100)
+            if symbol in self._peak_prices:
+                self._peak_prices[symbol] = max(self._peak_prices[symbol], entry_price)
+                self._stop_losses[symbol] = max(self._stop_losses.get(symbol, 0), stop_loss)
+                self._targets[symbol] = self._targets.get(symbol) or target
             else:
-                # Default target from config (1.8%)
-                tgt_pct = settings.trading.default_target_pct / 100
-                self._targets[symbol] = entry_price * (1 + tgt_pct)
+                self._peak_prices[symbol] = entry_price
+                self._stop_losses[symbol] = stop_loss
+                self._targets[symbol] = target
+            self._entry_prices[symbol] = entry_price
 
             # Persist to database so restarts don't lose this position
             self._persist_position(symbol)
@@ -166,22 +174,24 @@ class PositionMonitor:
                         )
                         self._persist_position(symbol)
 
-                    # Check if stop-loss hit
+                    # Check if stop-loss hit. A stop still below entry is the original stop;
+                    # one at/above entry has been moved up (breakeven lock or trail).
                     if current_price <= sl:
                         pnl = current_price - entry
                         pnl_pct = (pnl / entry * 100) if entry > 0 else 0
                         sell_signals.append({
                             "symbol": symbol,
-                            "reason": "TRAILING_STOP_LOSS",
+                            "reason": "STOP_LOSS" if sl < entry else "TRAILING_STOP",
                             "current_price": current_price,
+                            "trigger_price": sl,
                             "stop_loss": sl,
                             "entry": entry,
                             "pnl": round(pnl, 2),
                             "pnl_pct": round(pnl_pct, 2),
                         })
                         logger.warning(
-                            f"[TrailingSL] {symbol} HIT SL! Price {current_price:.2f} "
-                            f"<= SL {sl:.2f} (P&L: {pnl_pct:+.2f}%)"
+                            f"[{sell_signals[-1]['reason']}] {symbol} hit stop {sl:.2f}: "
+                            f"price {current_price:.2f} (gross {pnl_pct:+.2f}% vs entry {entry:.2f})"
                         )
 
                     # Check if target hit
@@ -192,6 +202,7 @@ class PositionMonitor:
                             "symbol": symbol,
                             "reason": "TARGET_HIT",
                             "current_price": current_price,
+                            "trigger_price": target,
                             "target": target,
                             "entry": entry,
                             "pnl": round(pnl, 2),
@@ -232,6 +243,7 @@ class TradingScheduler:
         self.scheduler = BackgroundScheduler(timezone=IST)
         self._running = False
         self._pipeline_lock = threading.Lock()
+        self._squareoff_lock = threading.Lock()  # 15:15 job and monitor retry never overlap
         self._last_run = None
         self._instance_lock = None
 
@@ -337,6 +349,12 @@ class TradingScheduler:
         # Immediately close any intraday position carried over from a prior day
         self._square_off_stale_positions()
 
+        # Started (or restarted) after 15:15 while the market is still open: the 15:15 job
+        # has already passed, so square off now instead of carrying positions overnight.
+        now = datetime.now(IST)
+        if is_market_open() and now.hour * 60 + now.minute >= 15 * 60 + 15:
+            self._auto_square_off()
+
         # Fire the first trading cycle immediately (don't wait for interval)
         # This way when user clicks "Start" at 10:01, it trades right away
         if is_market_open() and is_trading_window():
@@ -358,6 +376,12 @@ class TradingScheduler:
                     pass
             set_system_state("scheduler_status", "stopped")
             logger.info("Trading scheduler stopped")
+        if self._instance_lock is not None:
+            try:
+                self._instance_lock.close()
+            except Exception:
+                pass
+            self._instance_lock = None
 
     def is_running(self) -> bool:
         return self._running
@@ -368,18 +392,20 @@ class TradingScheduler:
             from alpha_prime.core.broker import get_broker
             broker = get_broker()
             positions = broker.get_positions()
+            added = 0
             for symbol, pos in positions.items():
                 avg_price = pos.get("avg_price", 0)
-                if avg_price > 0:
-                    # Register with default SL/target
-                    position_monitor.register_position(
-                        symbol=symbol,
-                        entry_price=avg_price,
-                        stop_loss=avg_price * (1 - settings.trading.default_stop_loss_pct / 100),
-                        target=avg_price * (1 + settings.trading.default_target_pct / 100)
-                    )
+                # Positions already loaded from monitored_positions keep their own stop,
+                # peak and target - re-registering them with defaults undid a raised stop.
+                if avg_price > 0 and not position_monitor.is_monitored(symbol):
+                    position_monitor.register_position(symbol=symbol, entry_price=avg_price)
+                    added += 1
+            # Drop monitor entries for positions that no longer exist
+            for symbol in list(position_monitor.get_status()):
+                if symbol not in positions:
+                    position_monitor.remove_position(symbol)
             if positions:
-                logger.info(f"Synced {len(positions)} positions to monitor")
+                logger.info(f"Synced {len(positions)} positions to monitor ({added} newly registered)")
         except Exception as e:
             logger.warning(f"Could not sync positions: {e}")
 
@@ -395,17 +421,21 @@ class TradingScheduler:
             return
         try:
             from alpha_prime.core.broker import get_broker
-            today_ist = datetime.now(IST).strftime("%Y-%m-%d")
-            stale = [
-                pos["symbol"] for pos in get_monitored_positions()
-                if str(pos.get("registered_at", ""))[:10] and
-                str(pos.get("registered_at", ""))[:10] < today_ist
-            ]
+            import pytz as _pytz
+            today_ist = datetime.now(IST).date()
+            broker = get_broker()
+            positions = broker.get_positions()
+            stale = []
+            for symbol, pos in positions.items():
+                opened = pos.get("opened_at")
+                if not opened:
+                    continue
+                opened_ist = _pytz.utc.localize(datetime.strptime(str(opened)[:19], "%Y-%m-%d %H:%M:%S")).astimezone(IST)
+                if opened_ist.date() < today_ist:
+                    stale.append(symbol)
             if not stale:
                 return
 
-            broker = get_broker()
-            positions = broker.get_positions()
             for symbol in stale:
                 qty = positions.get(symbol, {}).get("quantity", 0)
                 if qty > 0:
@@ -421,8 +451,10 @@ class TradingScheduler:
                     )
                     log_agent_activity(
                         "stale_square_off", "sell",
-                        f"Closed carried-over {symbol} qty={qty}", {"result": result}
+                        f"Closed carried-over {symbol} qty={qty}: {result.get('status')}", {"result": result}
                     )
+                    if result.get("status") not in ("EXECUTED", "PLACED"):
+                        continue  # keep monitoring; retried on the next tick
                 position_monitor.remove_position(symbol)
         except Exception as e:
             logger.error(f"[StaleSquareOff] error: {e}")
@@ -434,21 +466,40 @@ class TradingScheduler:
 
         now = datetime.now(IST)
 
-        # Only monitor during market hours
+        # Only monitor during market hours, and only on live session data
         if not is_market_open():
+            return
+        if not market_data.session_is_live():
+            logger.warning("[Monitor] No live session data - not checking stops/targets on stale prices")
             return
 
         try:
+            from alpha_prime.core.broker import get_broker
+            broker = get_broker()
+
             # Safety net: close any intraday position carried over from a prior day
             self._square_off_stale_positions()
+
+            # Past 15:15 with something still open (square-off missed or failed): retry it
+            if now.hour * 60 + now.minute >= 15 * 60 + 15 and broker.get_positions():
+                self._auto_square_off()
+
+            # Positions sold elsewhere (dashboard square-off, a script) leave the monitor
+            held = broker.get_positions()
+            for sym in list(position_monitor.get_status()):
+                if sym not in held:
+                    position_monitor.remove_position(sym)
+
+            # Equity snapshot for the dashboard history (realised + unrealised)
+            try:
+                broker.get_portfolio_summary(save_snapshot=True)
+            except Exception as e:
+                logger.debug(f"Snapshot failed: {e}")
 
             sell_signals = position_monitor.check_positions()
 
             if not sell_signals:
                 return
-
-            from alpha_prime.core.broker import get_broker
-            broker = get_broker()
 
             for signal in sell_signals:
                 symbol = signal["symbol"]
@@ -470,19 +521,25 @@ class TradingScheduler:
                         action="SELL",
                         quantity=qty,
                         rationale=f"Auto-{reason.lower().replace('_', ' ')}: "
-                                  f"price={price:.2f}, P&L={signal['pnl_pct']:+.2f}%",
+                                  f"trigger={signal['trigger_price']:.2f}, quote={price:.2f}, "
+                                  f"gross move={signal['pnl_pct']:+.2f}%",
                         agent_name="position_monitor",
-                        ref_price=price,
+                        # reference = the stop/target level, so slippage shows the overshoot
+                        # caused by checking only every 2 minutes
+                        ref_price=signal["trigger_price"],
                     )
-                    logger.info(f"[AutoSell] {symbol} result: {result.get('status')}")
+                    logger.info(f"[AutoSell] {symbol} result: {result.get('status')} "
+                                f"net P&L Rs.{result.get('realized_pnl', 0):+.2f}")
                     log_agent_activity(
                         "position_monitor", "auto_sell",
-                        f"{reason}: Sold {qty} {symbol} @ {price:.2f}",
+                        f"{reason}: Sold {qty} {symbol} @ {result.get('price', price)} "
+                        f"(net Rs.{result.get('realized_pnl', 0):+.2f}) [{result.get('status')}]",
                         {"signal": signal, "result": result}
                     )
 
-                    # Remove from monitor
-                    position_monitor.remove_position(symbol)
+                    # Stop monitoring only once the sell went through; else retry next tick
+                    if result.get("status") in ("EXECUTED", "PLACED"):
+                        position_monitor.remove_position(symbol)
                 else:
                     logger.warning(f"[AutoSell] {symbol} has 0 quantity, removing from monitor")
                     position_monitor.remove_position(symbol)
@@ -490,15 +547,25 @@ class TradingScheduler:
         except Exception as e:
             logger.error(f"Position monitor error: {e}")
 
-    def _auto_square_off(self):
-        """Square off ALL intraday positions at 3:15 PM"""
-        if not self._running:
+    def _auto_square_off(self, force: bool = False):
+        """Square off ALL intraday positions (15:15 job, catch-up, or the dashboard button
+        with force=True - the dashboard process does not run the scheduler)."""
+        if not self._running and not force:
             return
         now = datetime.now(IST)
 
-        # Only on weekdays
-        if now.weekday() >= 5:
+        if not is_market_open():
+            logger.info("[SquareOff] Market closed - nothing can be sold now")
             return
+        if not self._squareoff_lock.acquire(blocking=False):
+            logger.info("[SquareOff] Already running")
+            return
+        try:
+            self._square_off_all(now)
+        finally:
+            self._squareoff_lock.release()
+
+    def _square_off_all(self, now):
 
         logger.info("=" * 60)
         logger.info("AUTO SQUARE-OFF: Closing all intraday positions at 3:15 PM")
@@ -533,19 +600,24 @@ class TradingScheduler:
                     symbol=symbol,
                     action="SELL",
                     quantity=qty,
-                    ref_price=current_price or None,
-                    rationale=f"EOD auto square-off at 3:15 PM. "
-                              f"Entry={entry_price:.2f}, Exit={current_price:.2f}, "
-                              f"P&L=Rs.{pnl:+.2f}",
+                    ref_price=(current_price if pos.get("quote_ok", True) else None) or None,
+                    rationale=f"EOD square-off. Entry={entry_price:.2f}",
                     agent_name="auto_square_off"
                 )
 
-                total_pnl += pnl
+                if result.get("status") not in ("EXECUTED", "PLACED"):
+                    logger.error(f"[SquareOff] {symbol} NOT sold: {result.get('error', result.get('status'))} "
+                                 "- will retry on the next monitor tick")
+                    log_agent_activity("auto_square_off", "error", f"{symbol} not sold: {result}")
+                    continue
+                net = result.get("realized_pnl", pnl) or 0.0
+                total_pnl += net
                 position_monitor.remove_position(symbol)
 
                 log_agent_activity(
                     "auto_square_off", "sell",
-                    f"Squared off {qty} {symbol} @ {current_price:.2f}, P&L: Rs.{pnl:+.2f}",
+                    f"Squared off {qty} {symbol} @ {result.get('price', current_price)}, "
+                    f"net P&L: Rs.{net:+.2f}",
                     {"result": result}
                 )
 
@@ -590,6 +662,11 @@ class TradingScheduler:
         # Don't trade in the last 15 minutes (closing auction)
         if now.hour == 15 and now.minute >= 15:
             logger.info("Last 15 minutes of market - skipping new trades")
+            return
+
+        if not market_data.session_is_live():
+            logger.warning("No live NSE session data (holiday or feed outage) - skipping cycle")
+            set_system_state("last_cycle_status", "skipped_no_live_session")
             return
 
         # Prevent concurrent runs

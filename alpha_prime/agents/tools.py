@@ -72,6 +72,26 @@ def run_technical_analysis(symbol: str, period: str = "3mo") -> str:
     return json.dumps({"error": f"Analysis failed for {symbol}"})
 
 
+def _intraday_staleness(df, max_age_min: float = 15):
+    """Why these 5-min bars can't be trusted for a decision right now, or None if they can.
+    On a holiday or feed lag the last bar is from an earlier session, and the engine used to
+    'confirm' a BUY on it (20 Oct 2026)."""
+    import pytz
+    from datetime import datetime
+    if df is None or len(df) == 0:
+        return "no intraday data"
+    ist = pytz.timezone("Asia/Kolkata")
+    last = pd.Timestamp(df.index[-1])
+    last = (last.tz_localize("UTC") if last.tzinfo is None else last).tz_convert(ist)
+    now = datetime.now(ist)
+    if last.date() != now.date():
+        return f"stale intraday data: last bar {last:%Y-%m-%d %H:%M} IST is not from today"
+    age = (now - last.to_pydatetime()).total_seconds() / 60 - 5  # bar time = bar open
+    if age > max_age_min:
+        return f"stale intraday data: last bar {last:%H:%M} IST is {age:.0f} min old"
+    return None
+
+
 @tool
 def run_intraday_analysis(symbol: str) -> str:
     """Run technical analysis on intraday (5-minute) data for a stock. Best for same-day trading decisions. Uses 5 days of data to ensure enough candles for indicator computation.
@@ -81,6 +101,10 @@ def run_intraday_analysis(symbol: str) -> str:
     df = market_data.get_intraday_data(symbol, interval="5m", period="5d")
     if df is None:
         return json.dumps({"error": f"No intraday data for {symbol}"})
+    if is_market_open():
+        stale = _intraday_staleness(df)
+        if stale:
+            return json.dumps({"error": f"{symbol}: {stale} - do not trade on it"})
 
     report = technical_analyzer.analyze(df, symbol=clean_symbol(symbol))
     if report:
@@ -208,6 +232,10 @@ def place_trade(symbol: str, action: str, quantity: int,
                 # Run quick intraday check - verify trend is not BEARISH
                 try:
                     df = market_data.get_intraday_data(symbol, interval="5m", period="5d")
+                    stale = _intraday_staleness(df)
+                    if stale:
+                        return json.dumps({"status": "REJECTED",
+                                           "error": f"BUY rejected: {symbol} {stale}."})
                     if df is not None:
                         from alpha_prime.data.technical_analysis import technical_analyzer
                         report = technical_analyzer.analyze(df, symbol=clean_symbol(symbol))
@@ -235,6 +263,10 @@ def place_trade(symbol: str, action: str, quantity: int,
 
         except Exception as e:
             logger.warning(f"Pre-trade price validation failed for {symbol}: {e}")
+        if not ref_price:
+            return json.dumps({"status": "REJECTED",
+                               "error": f"BUY rejected: no live price for {symbol} (market closed, "
+                                        f"holiday or feed outage)."})
 
         # === HARD-CODED RISK LIMITS (code-enforced; never trust LLM math) ===
         # Daily-loss circuit breaker + max-open-positions + risk-based sizing.
@@ -273,6 +305,12 @@ def place_trade(symbol: str, action: str, quantity: int,
         try:
             from alpha_prime.core.scheduler import position_monitor
             entry_price = result.get("price", 0)
+            # After a top-up the monitor's entry is the position's AVERAGE price, not this fill
+            try:
+                held = get_broker().get_positions().get(clean_symbol(symbol), {})
+                entry_price = held.get("avg_price") or entry_price
+            except Exception:
+                pass
             if entry_price > 0:
                 position_monitor.register_position(
                     symbol=clean_symbol(symbol),
@@ -380,6 +418,12 @@ def save_signal(symbol: str, signal_type: str, strength: float,
     if signal_type.upper() == "BUY":
         try:
             df = market_data.get_intraday_data(symbol_clean, interval="5m", period="5d")
+            stale = _intraday_staleness(df)
+            if stale:
+                record_signal(symbol=symbol_clean, signal_type="HOLD", strength=0.0,
+                              agent_name=agent_name, reasoning=f"BLOCKED: {stale}. {reasoning}")
+                return json.dumps({"status": "BLOCKED", "symbol": symbol_clean, "signal": "HOLD",
+                                   "reason": stale})
             if df is not None:
                 from alpha_prime.data.technical_analysis import technical_analyzer
                 report = technical_analyzer.analyze(df, symbol=symbol_clean)
@@ -520,8 +564,8 @@ def _check_stock_cooldown(symbol_clean: str) -> bool:
             return False
 
         # Check last 3 days of trades for this stock
-        from datetime import datetime, timedelta
-        cutoff = datetime.now() - timedelta(days=3)
+        from datetime import datetime, timedelta, timezone
+        cutoff = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=3)  # stored UTC
 
         for trade in recent_trades:
             try:
@@ -540,19 +584,14 @@ def _check_stock_cooldown(symbol_clean: str) -> bool:
                 )
                 return True
 
-            # Also check if we bought recently and the stock dropped
-            if trade.get("action") == "BUY":
-                buy_price = trade.get("price", 0)
-                if buy_price > 0:
-                    from alpha_prime.data.market_data import market_data as md
-                    current_price = md.get_live_price(symbol_clean)
-                    if current_price and current_price < buy_price * 0.99:
-                        # Stock is down >1% from our recent buy — avoid
-                        logger.info(
-                            f"[cooldown] {symbol_clean} bought at {buy_price}, "
-                            f"now at {current_price} ({((current_price/buy_price)-1)*100:.1f}%). Cooldown."
-                        )
-                        return True
+        # Also avoid adding to a position we still hold that is down >1% from its average
+        held = get_broker().get_positions().get(symbol_clean)
+        if held and held.get("avg_price", 0) > 0 and held.get("quote_ok", True):
+            avg, cur = held["avg_price"], held["current_price"]
+            if cur < avg * 0.99:
+                logger.info(f"[cooldown] holding {symbol_clean} at avg {avg}, now {cur} "
+                            f"({(cur / avg - 1) * 100:.1f}%). Cooldown.")
+                return True
 
     except Exception as e:
         logger.warning(f"[cooldown] Error checking cooldown for {symbol_clean}: {e}")
@@ -727,6 +766,9 @@ def get_top_gainers(min_gain_pct: float = 1.0, max_gain_pct: float = 5.0) -> str
     current_min = now.hour * 60 + now.minute
     total_market_minutes = market_close_min - market_open_min  # 375
 
+    if not is_market_open():
+        return json.dumps({"error": "market closed (pre-open, holiday or after hours): no session data today",
+                           "gainers": []})
     elapsed_minutes = max(current_min - market_open_min, 1)
     day_fraction = min(elapsed_minutes / total_market_minutes, 1.0)
 
@@ -752,7 +794,12 @@ def get_top_gainers(min_gain_pct: float = 1.0, max_gain_pct: float = 5.0) -> str
             try:
                 if isinstance(data.columns, pd.MultiIndex):
                     stock_data = data[sym_nse] if sym_nse in data.columns.get_level_values(0) else None
-                    if stock_data is None or stock_data.empty or len(stock_data) < 2:
+                    if stock_data is None or stock_data.empty:
+                        continue
+                    stock_data = stock_data.dropna(subset=["Close"])
+                    # The last daily bar must be TODAY's; otherwise it is the previous session
+                    # (holiday / data gap) and its volume ratio is inflated many times over.
+                    if len(stock_data) < 2 or pd.Timestamp(stock_data.index[-1]).date() != now.date():
                         continue
                     prev_close = float(stock_data["Close"].iloc[-2])
                     current_price = float(stock_data["Close"].iloc[-1])

@@ -125,7 +125,10 @@ def update_forward_data():
     # a day is complete once the market has closed
     last_complete = now.date() if (now.hour * 60 + now.minute) >= 15 * 60 + 35 else now.date() - timedelta(days=1)
     have = max((df.index[-1].date() for df in fwd.values() if len(df)), default=HIST_END)
-    start = max(have + timedelta(days=1), FORWARD_START, now.date() - timedelta(days=55))
+    # re-fetch the last stored day as well: a day saved from a late or partial download is
+    # completed (newer bars replace older ones below)
+    start = max(have if have >= FORWARD_START else have + timedelta(days=1), FORWARD_START,
+                now.date() - timedelta(days=55))
     if start > last_complete:
         return fwd, last_complete, []
     if start > max(have + timedelta(days=1), FORWARD_START):
@@ -183,23 +186,29 @@ def run_book(mkt, cls, slip, end):
 
 def nifty_vs_basket(mkt, trades):
     """Per signal day: basket return (bp, after slippage, before charges) vs trading NIFTY in the
-    signal direction over the same window (first entry bar open -> 15:15 bar open)."""
+    signal direction over the same windows (each trade's entry bar open -> its exit bar open)."""
     if trades.empty:
         return pd.DataFrame()
     N = mkt.df("NIFTY")
     rows = []
     for d, g in trades.groupby(trades.entry_time.map(lambda t: t.date())):
         side = 1 if g.side.iloc[0] == "long" else -1
-        t0 = g.entry_time.min()
         day = N[N.index.date == d]
-        n0 = day.loc[day.index >= t0, "Open"]
-        n1 = day.loc[day.index.strftime("%H:%M") >= "15:15", "Open"]
-        if n0.empty:
+        if day.empty:
             continue
-        exit_px = n1.iloc[0] if len(n1) else day["Close"].iloc[-1]
+        legs = []
+        for _, tr in g.iterrows():  # NIFTY over each trade's own holding window
+            n0 = day.loc[day.index >= tr.entry_time, "Open"]
+            n1 = day.loc[day.index >= tr.exit_time, "Open"]
+            if n0.empty:
+                continue
+            exit_px = n1.iloc[0] if len(n1) else day["Close"].iloc[-1]
+            legs.append((exit_px / n0.iloc[0] - 1) * 1e4 * side)
+        if not legs:
+            continue
         rows.append(dict(date=d, side=g.side.iloc[0], names=len(g),
                          basket_bp=round(float(g.pnl_pct.mean()) * 100, 1),
-                         nifty_bp=round((exit_px / n0.iloc[0] - 1) * 1e4 * side, 1),
+                         nifty_bp=round(float(sum(legs) / len(legs)), 1),
                          net=round(float(g.pnl.sum()), 0)))
     df = pd.DataFrame(rows)
     if len(df):
@@ -214,18 +223,22 @@ def replay_fidelity(capped_trades, start, end):
     from alpha_prime.core.config import settings
     c = sqlite3.connect(str(settings.db_path))
     rows = c.execute("SELECT timestamp, symbol FROM trades WHERE trading_mode='paper' AND action='BUY' "
-                     "AND UPPER(COALESCE(status,'')) NOT IN ('REJECTED','CANCELLED','FAILED') "
+                     "AND UPPER(COALESCE(status,'')) NOT IN ('REJECTED','CANCELLED','FAILED','VOID') "
                      "AND date(timestamp) BETWEEN ? AND ?", (str(start), str(end))).fetchall()
     if not rows:
         return None, 0
     utc = pytz.utc
-    matched = 0
+    matched, used = 0, set()
     for ts, sym in rows:
         t = utc.localize(datetime.strptime(ts[:19], "%Y-%m-%d %H:%M:%S")).astimezone(IST)
-        if not capped_trades.empty:
-            cand = capped_trades[(capped_trades.sym == sym) & (capped_trades.side == "long")]
-            if any(abs((et - t).total_seconds()) <= 5 * 60 + 59 for et in cand.entry_time):
+        if capped_trades.empty:
+            continue
+        cand = capped_trades[(capped_trades.sym == sym) & (capped_trades.side == "long")]
+        for i, et in cand.entry_time.items():
+            if i not in used and abs((et - t).total_seconds()) <= 5 * 60:  # one-to-one, +-1 bar
+                used.add(i)
                 matched += 1
+                break
     return matched / len(rows) * 100, len(rows)
 
 

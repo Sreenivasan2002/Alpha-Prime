@@ -59,7 +59,7 @@ def load_trades(day: str):
         r["ts"] = UTC.localize(datetime.strptime(r["timestamp"][:19], "%Y-%m-%d %H:%M:%S")).astimezone(IST)
         for k in ("ref_price", "nifty_price", "charges", "gross_pnl"):
             r.setdefault(k, None)  # older DBs have no instrumentation columns
-    ok = [r for r in rows if str(r.get("status") or "").upper() not in ("REJECTED", "CANCELLED", "FAILED")]
+    ok = [r for r in rows if str(r.get("status") or "").upper() not in ("REJECTED", "CANCELLED", "FAILED", "VOID")]
     return [r for r in ok if r["ts"].strftime("%Y-%m-%d") == day], ok
 
 
@@ -125,13 +125,19 @@ def main():
     net_qty = defaultdict(int)
     for r in history:
         net_qty[r["symbol"]] += r["quantity"] if r["action"] == "BUY" else -r["quantity"]
-    overnight = {s: q for s, q in net_qty.items() if q > 0}
+    now = datetime.now(IST)
+    session_over = day < now.strftime("%Y-%m-%d") or (now.hour * 60 + now.minute) >= 15 * 60 + 30
+    overnight = {s: q for s, q in net_qty.items() if q > 0} if session_over else {}
+    open_now = {s: q for s, q in net_qty.items() if q > 0} if not session_over else {}
 
     if not today:
         print("  No paper trades on this day.")
     syms = sorted({r["symbol"] for r in today})
     bars = bars_5m(syms + ["NIFTY"], day) if today else {}
     nb = bars.get("NIFTY")
+    # trades on a day with no NIFTY bars = the exchange had no session (holiday) - phantom fills
+    no_session = bool(today) and (nb is None or nb.empty)
+    day_open_nifty = float(nb["Open"].iloc[0]) if nb is not None and not nb.empty else None
 
     # ---- round trips (flat -> flat per symbol), running gross exposure, per-fill slippage
     trips, open_trip, pos = [], {}, defaultdict(lambda: [0, 0.0])  # qty, cost
@@ -179,7 +185,8 @@ def main():
             tr = open_trip.get(s)
             if tr is None:  # closing a position carried in from an earlier day
                 tr = open_trip[s] = dict(sym=s, entry_ts=None, buy_value=avg * q, sell_value=0.0, net=0.0,
-                                         gross=0.0, charges=0.0, n_fills=0, nifty_in=None, carried=True)
+                                         gross=0.0, charges=0.0, n_fills=0, nifty_in=day_open_nifty,
+                                         carried=True)
             tr["sell_value"] += q * px
             fill_gross = r["gross_pnl"] if r["gross_pnl"] is not None else (px - avg) * q
             net = r["pnl"] or 0.0
@@ -246,8 +253,11 @@ def main():
         ("P4 gross exposure", max_gross <= gross_cap * 1.001, f"max Rs {max_gross:,.0f} (cap {gross_cap:,.0f})"),
         ("P4 flat by " + FLAT_BY, last_exit is None or last_exit.strftime("%H:%M") <= FLAT_BY,
          last_exit.strftime("%H:%M") if last_exit else "no exits"),
-        ("P4 nothing overnight", not overnight and not still_open,
-         "flat" if not overnight else f"OPEN: {overnight}"),
+        ("Market session", not no_session,
+         "NO SESSION (holiday?) - these fills are phantom; mark them VOID" if no_session else "live"),
+        ("P4 nothing overnight", not overnight,
+         ("flat" if not overnight else f"OPEN: {overnight}") if session_over
+         else f"session not over yet; open now: {open_now or 'none'}"),
         ("P5 charges/day", tot["charges"] <= MAX_CHARGES_PER_DAY,
          f"Rs {tot['charges']:,.0f} (<= {MAX_CHARGES_PER_DAY:,.0f})"),
         ("Kill switch: day > -2.2%", tot["net"] / cap * 100 > -2.2, f"{tot['net'] / cap * 100:+.2f}%"),

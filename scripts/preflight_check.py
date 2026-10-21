@@ -74,7 +74,9 @@ except Exception as e:
     check("Database", False, str(e)[:110])
 
 now = datetime.now(IST)
-check("Weekday", now.weekday() < 5, now.strftime("%A") + " (also confirm it is not an NSE holiday)")
+from alpha_prime.core.market_hours import is_trading_day  # noqa: E402
+check("Trading day", is_trading_day(now.date()),
+      now.strftime("%A %d %b") + ("" if is_trading_day(now.date()) else " - weekend or NSE holiday, market closed"))
 
 print()
 if all(results):

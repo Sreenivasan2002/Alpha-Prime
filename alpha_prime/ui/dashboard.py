@@ -575,14 +575,19 @@ def render_sidebar():
         with col1:
             start_disabled = trading_scheduler.is_running() or external
             if st.button("Start" if not start_disabled else "Running",
-                        disabled=start_disabled, width="stretch", type="primary"):
-                trading_scheduler.start()
+                        disabled=start_disabled, width="stretch", type="primary",
+                        help="Starts run_trading.py in its own window"):
+                st.session_state["launch_msg"] = launch_trading_process()
+                time.sleep(3)
                 st.rerun()
         with col2:
+            # Only stops a scheduler running inside this process (older setups)
             if st.button("Stop", disabled=not trading_scheduler.is_running(),
                         width="stretch"):
                 trading_scheduler.stop()
                 st.rerun()
+        if st.session_state.get("launch_msg"):
+            st.caption(st.session_state["launch_msg"])
 
         if st.button("Run Pipeline NOW", width="stretch",
                     type="secondary", help="Manually trigger one trading cycle"):
@@ -596,9 +601,14 @@ def render_sidebar():
         if st.button("Square Off ALL Positions", width="stretch",
                     help="Sell all intraday positions immediately"):
             with st.spinner("Squaring off all positions..."):
-                trading_scheduler._auto_square_off()
-            st.success("Square-off executed! Check Agent Logs for details.")
-            st.rerun()
+                # force=True: works even though this process does not run the scheduler.
+                # The paper book lives in the database, so the trading process sees it.
+                trading_scheduler._auto_square_off(force=True)
+            left = get_broker().get_positions()
+            if left:
+                st.error(f"Still open: {', '.join(left)} (market closed or no live price). See Agent Logs.")
+            else:
+                st.success("All positions squared off.")
 
         interval = st.slider("Interval (min)", 5, 60,
                             settings.market.analysis_interval_minutes, 5)
@@ -642,6 +652,26 @@ def demo_portfolio_summary():
     }
 
 
+def to_ist(ts, fmt: str = "%d %b %H:%M:%S") -> str:
+    """DB timestamps are UTC (SQLite CURRENT_TIMESTAMP); show them in IST."""
+    try:
+        t = pd.Timestamp(str(ts)[:19])
+        return t.tz_localize("UTC").tz_convert(IST).strftime(fmt)
+    except Exception:
+        return str(ts)
+
+
+def launch_trading_process() -> str:
+    """Start run_trading.py in its own console window. Trading must not run inside
+    Streamlit: editing any source file makes Streamlit reload the modules in-process,
+    leaving two copies of the scheduler/monitor (21 Oct 2026)."""
+    import subprocess
+    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    flags = getattr(subprocess, "CREATE_NEW_CONSOLE", 0)
+    subprocess.Popen([sys.executable, os.path.join(root, "run_trading.py")], cwd=root, creationflags=flags)
+    return "Trading started in a new window (run_trading.py). Close that window or press Ctrl+C there to stop."
+
+
 def external_scheduler_running() -> bool:
     """True when another process (run_trading.py / start_experiment.bat) holds the scheduler lock."""
     if settings.demo.enabled or trading_scheduler.is_running():
@@ -665,14 +695,14 @@ def realised_pnl(trading_mode: str) -> dict:
     never includes money already made or lost on positions that are now closed.
     Timestamps are stored in UTC; NSE hours fall on the same calendar date.
     """
-    today = datetime.now(IST).strftime("%Y-%m-%d")
+    from alpha_prime.core.database import today_start_utc
+    since = today_start_utc()
     sells = [t for t in get_trades(limit=100000, trading_mode=trading_mode)
-             if t.get("action") == "SELL"
-             and str(t.get("status") or "").upper() not in ("REJECTED", "CANCELLED", "FAILED")]
+             if t.get("action") == "SELL" and str(t.get("status") or "").upper() == "EXECUTED"]
     sells.sort(key=lambda t: t["timestamp"])
     return {
-        "today": sum((t.get("pnl") or 0.0) for t in sells if str(t["timestamp"]).startswith(today)),
-        "today_count": sum(1 for t in sells if str(t["timestamp"]).startswith(today)),
+        "today": sum((t.get("pnl") or 0.0) for t in sells if str(t["timestamp"]) >= since),
+        "today_count": sum(1 for t in sells if str(t["timestamp"]) >= since),
         "total": sum((t.get("pnl") or 0.0) for t in sells),
         "sells": sells,
     }
@@ -722,29 +752,30 @@ def render_portfolio_tab():
 
     paper = settings.trading.mode == "paper" and not settings.demo.enabled
     realised = realised_pnl("paper") if paper else None
-    open_pnl = summary.get('total_pnl', 0)
+    open_pnl = summary.get('unrealised_pnl', 0)
 
     col1, col2, col3 = st.columns(3)
     with col1:
-        balance = summary.get('available_cash', 0) + (realised["total"] if paper else 0)
-        st.metric("Balance", f"Rs {fmt_rs(balance)}")
+        # The paper broker's cash already includes realised P&L (rebuilt from the trades table)
+        st.metric("Balance", f"Rs {fmt_rs(summary.get('available_cash', 0))}")
     with col2:
         st.metric("Invested in Intraday", f"Rs {fmt_rs(summary.get('total_invested', 0))}")
     with col3:
         if paper:
             # Today = trades closed today + positions still open; % of REAL capital
-            pnl = realised["today"] + open_pnl
-            pnl_pct = pnl / settings.trading.capital * 100 if settings.trading.capital else 0
-            st.metric("Profit & Loss (today)", f"Rs {fmt_rs(pnl)}", delta=f"{pnl_pct:+.2f}%")
+            st.metric("Profit & Loss (today)", f"Rs {fmt_rs(summary.get('today_pnl', 0))}",
+                      delta=f"{summary.get('today_pnl_pct', 0):+.2f}%")
         else:
             pnl = summary.get('total_pnl', 0)
             pnl_pct = summary.get('total_pnl_pct', 0)
             st.metric("Profit & Loss", f"Rs {fmt_rs(pnl)}", delta=f"{pnl_pct:+.2f}%")
     if paper:
         st.caption(
-            f"Today: closed trades Rs {realised['today']:+,.0f} ({realised['today_count']} sold) · "
-            f"open positions Rs {open_pnl:+,.0f}  |  All closed trades since the start: "
-            f"Rs {realised['total']:+,.0f}  (all figures after charges)")
+            f"Today: closed trades Rs {summary.get('realised_today', 0):+,.0f} ({realised['today_count']} sold) · "
+            f"open positions Rs {open_pnl:+,.0f}  |  Since the start: closed Rs "
+            f"{summary.get('realised_pnl', 0):+,.0f}, total Rs {summary.get('total_pnl', 0):+,.0f} "
+            f"({summary.get('total_pnl_pct', 0):+.2f}% of Rs {fmt_rs(settings.trading.capital)})  "
+            f"(after charges)")
 
     st.markdown("")  # spacer
 
@@ -851,23 +882,34 @@ def render_portfolio_tab():
                     hide_index=True, height=250)
 
     # Position Monitor Status (never populated in demo: no pipeline runs there)
-    monitor_status = {} if settings.demo.enabled else position_monitor.get_status()
+    # Read from the database: the trading process (run_trading.py) persists every stop change
+    # there, while this process's in-memory monitor is never updated.
+    if settings.demo.enabled:
+        monitor_status = {}
+    else:
+        from alpha_prime.core.database import get_monitored_positions
+        monitor_status = {m["symbol"]: m for m in get_monitored_positions()}
     if monitor_status:
-        st.markdown("##### Position Monitor (Trailing Stop-Loss)")
+        st.markdown("##### Position Monitor (Stop-Loss / Target)")
+        held = summary.get("positions", {})
         mon_rows = []
         for sym, data in monitor_status.items():
-            current_price = market_data.get_live_price(sym) or 0
-            pnl = current_price - data["entry"] if current_price > 0 else 0
-            pnl_pct = (pnl / data["entry"] * 100) if data["entry"] > 0 else 0
+            pos = held.get(sym, {})
+            qty = pos.get("quantity", 0)
+            current_price = pos.get("current_price") if pos.get("quote_ok") else None
+            entry = data["entry_price"]
+            pnl = (current_price - entry) * qty if current_price else 0
+            pnl_pct = ((current_price / entry - 1) * 100) if current_price and entry > 0 else 0
             mon_rows.append({
                 "Symbol": sym,
-                "Entry": f"{data['entry']:.2f}",
-                "CMP": f"{current_price:.2f}" if current_price > 0 else "N/A",
-                "Peak": f"{data['peak']:.2f}",
-                "Trail SL": f"{data['stop_loss']:.2f}",
+                "Qty": qty,
+                "Entry": f"{entry:.2f}",
+                "CMP": f"{current_price:.2f}" if current_price else "N/A",
+                "Peak": f"{data['peak_price']:.2f}",
+                "Stop": f"{data['stop_loss']:.2f}",
                 "Target": f"{data['target']:.2f}",
-                "P&L": f"{pnl:+.2f}",
-                "P&L%": f"{pnl_pct:+.1f}%",
+                "P&L (Rs, gross)": f"{pnl:+,.0f}",
+                "P&L%": f"{pnl_pct:+.2f}%",
             })
         st.dataframe(pd.DataFrame(mon_rows), width="stretch",
                     hide_index=True, height=200)
@@ -876,113 +918,7 @@ def render_portfolio_tab():
     # ---- Risk-Adjusted Performance Metrics (Sharpe Ratio & Max Drawdown) ----
     st.markdown("##### Risk-Adjusted Performance")
     try:
-        trades_for_metrics = get_trades(limit=500, trading_mode=settings.trading.mode)
-        if trades_for_metrics and len(trades_for_metrics) >= 2:
-            # Calculate per-trade returns
-            trade_returns = []
-            for t in trades_for_metrics:
-                if t.get("action") == "SELL" and t.get("pnl") is not None:
-                    entry_val = t.get("price", 0) * t.get("quantity", 0)
-                    if entry_val > 0:
-                        ret = t["pnl"] / entry_val
-                        trade_returns.append(ret)
-
-            # Also compute from portfolio history for equity curve
-            history = get_portfolio_history(limit=500)
-
-            if trade_returns and len(trade_returns) >= 2:
-                import numpy as np_metrics
-                returns_arr = np_metrics.array(trade_returns)
-
-                # Sharpe Ratio (annualized, assuming ~250 trading days, ~5 trades/day avg)
-                avg_return = np_metrics.mean(returns_arr)
-                std_return = np_metrics.std(returns_arr, ddof=1)
-                # Risk-free rate: ~7% annually for India (RBI repo rate) -> per trade ~0.028%
-                risk_free_per_trade = 0.07 / (250 * 5)  # rough approximation
-                sharpe = ((avg_return - risk_free_per_trade) / std_return * np_metrics.sqrt(250 * 5)
-                         if std_return > 0 else 0)
-
-                # Win Rate
-                wins = sum(1 for r in returns_arr if r > 0)
-                win_rate = wins / len(returns_arr) * 100
-
-                # Average Win / Average Loss
-                win_returns = [r for r in returns_arr if r > 0]
-                loss_returns = [r for r in returns_arr if r < 0]
-                avg_win = np_metrics.mean(win_returns) * 100 if win_returns else 0
-                avg_loss = np_metrics.mean(loss_returns) * 100 if loss_returns else 0
-
-                # Profit Factor
-                gross_profit = sum(r for r in returns_arr if r > 0)
-                gross_loss = abs(sum(r for r in returns_arr if r < 0))
-                profit_factor = gross_profit / gross_loss if gross_loss > 0 else float('inf')
-
-                # Max Drawdown from equity curve (portfolio history)
-                max_drawdown_pct = 0.0
-                if history and len(history) >= 2:
-                    values = [h.get("total_value", 0) for h in reversed(history) if h.get("total_value", 0) > 0]
-                    if values:
-                        peak = values[0]
-                        for v in values:
-                            if v > peak:
-                                peak = v
-                            dd = (peak - v) / peak * 100 if peak > 0 else 0
-                            if dd > max_drawdown_pct:
-                                max_drawdown_pct = dd
-
-                # Display metrics
-                mc1, mc2, mc3, mc4, mc5, mc6 = st.columns(6)
-                with mc1:
-                    sharpe_color = "normal" if sharpe >= 1 else "off"
-                    st.metric("Sharpe Ratio", f"{sharpe:.2f}",
-                             help="Risk-adjusted return. >1 = good, >2 = excellent")
-                with mc2:
-                    st.metric("Win Rate", f"{win_rate:.0f}%",
-                             help="Percentage of profitable trades")
-                with mc3:
-                    st.metric("Profit Factor", f"{profit_factor:.2f}" if profit_factor < 100 else "INF",
-                             help="Gross profit / Gross loss. >1.5 = good")
-                with mc4:
-                    st.metric("Avg Win", f"+{avg_win:.2f}%",
-                             help="Average return on winning trades")
-                with mc5:
-                    st.metric("Avg Loss", f"{avg_loss:.2f}%",
-                             help="Average return on losing trades")
-                with mc6:
-                    st.metric("Max Drawdown", f"-{max_drawdown_pct:.2f}%",
-                             help="Largest peak-to-trough decline")
-
-                # Equity curve with drawdown overlay
-                if history and len(history) >= 3:
-                    hist_df2 = pd.DataFrame(reversed(history))
-                    hist_df2["timestamp"] = pd.to_datetime(hist_df2["timestamp"])
-                    values_series = hist_df2["total_value"]
-                    peak_series = values_series.cummax()
-                    drawdown_series = ((peak_series - values_series) / peak_series * 100).fillna(0)
-
-                    fig_dd = go.Figure()
-                    fig_dd.add_trace(go.Scatter(
-                        x=hist_df2["timestamp"], y=drawdown_series,
-                        mode="lines", name="Drawdown %",
-                        line=dict(color="#f87171", width=1.5),
-                        fill="tozeroy", fillcolor="rgba(248, 113, 113, 0.15)"
-                    ))
-                    fig_dd.update_layout(
-                        height=200,
-                        margin=dict(l=10, r=10, t=5, b=25),
-                        paper_bgcolor="rgba(0,0,0,0)",
-                        plot_bgcolor="rgba(0,0,0,0)",
-                        xaxis=dict(gridcolor="rgba(255,255,255,0.06)", showgrid=True),
-                        yaxis=dict(gridcolor="rgba(255,255,255,0.06)", showgrid=True,
-                                  title="Drawdown %", autorange="reversed"),
-                        font=dict(color="#94a3b8", size=10),
-                        showlegend=False
-                    )
-                    st.plotly_chart(fig_dd, width="stretch")
-            else:
-                st.info("Not enough completed trades to calculate risk metrics. Complete at least 2 sell trades.")
-        else:
-            st.info("No trade history available. Run trading cycles to see risk-adjusted performance metrics.")
+        render_performance(settings.trading.mode)
     except Exception as e:
         st.warning(f"Could not compute risk metrics: {e}")
 
@@ -1013,13 +949,94 @@ def render_portfolio_tab():
             st.warning(f"Groww data unavailable: {e}")
 
 
+def performance_stats(trading_mode: str, capital: float) -> dict:
+    """Performance of CLOSED trades from the trades table, in rupees after charges.
+
+    The old panel annualised per-trade returns with sqrt(250*5) (a Sharpe of -23), took
+    drawdown from 5x-margin snapshots that ignored realised P&L, and computed profit factor
+    from percentages. Here: win rate / profit factor / averages over executed SELLs, Sharpe
+    from DAILY realised P&L (needs >= 10 trading days), drawdown from cumulative realised P&L
+    on real capital."""
+    sells = [t for t in get_trades(limit=100000, trading_mode=trading_mode)
+             if t.get("action") == "SELL" and str(t.get("status") or "").upper() == "EXECUTED"]
+    if not sells:
+        return {}
+    df = pd.DataFrame(sells).sort_values("timestamp")
+    df["pnl"] = df["pnl"].fillna(0.0)
+    df["exit_value"] = df["price"] * df["quantity"]
+    df["ret"] = df["pnl"] / df["exit_value"].where(df["exit_value"] > 0)
+    df["day"] = pd.to_datetime(df["timestamp"]).dt.tz_localize("UTC").dt.tz_convert(IST).dt.date
+    wins, losses = df[df.pnl > 0], df[df.pnl < 0]
+    daily = df.groupby("day")["pnl"].sum()
+    sharpe = None
+    if len(daily) >= 10 and daily.std(ddof=1) > 0:
+        sharpe = float(daily.mean() / daily.std(ddof=1) * (252 ** 0.5))
+    equity = capital + df["pnl"].cumsum()
+    peak = equity.cummax()
+    dd = (peak - equity) / peak * 100
+    return {
+        "trades": len(df), "days": len(daily),
+        "net": float(df.pnl.sum()),
+        "win_rate": len(wins) / len(df) * 100,
+        "profit_factor": float(wins.pnl.sum() / -losses.pnl.sum()) if len(losses) else None,
+        "avg_win": float(wins.pnl.mean()) if len(wins) else 0.0,
+        "avg_loss": float(losses.pnl.mean()) if len(losses) else 0.0,
+        "avg_win_pct": float(wins.ret.mean() * 100) if len(wins) else 0.0,
+        "avg_loss_pct": float(losses.ret.mean() * 100) if len(losses) else 0.0,
+        "sharpe": sharpe,
+        "max_dd_pct": float(dd.max()) if len(dd) else 0.0,
+        "dd_series": pd.DataFrame({"time": pd.to_datetime(df["timestamp"]).dt.tz_localize("UTC")
+                                   .dt.tz_convert(IST).dt.tz_localize(None), "dd": dd.values}),
+    }
+
+
+def render_performance(trading_mode: str):
+    stats = performance_stats(trading_mode, settings.trading.capital)
+    if not stats:
+        st.info("No closed trades yet.")
+        return
+    mc1, mc2, mc3, mc4, mc5, mc6 = st.columns(6)
+    with mc1:
+        st.metric("Sharpe (daily)", "n/a" if stats["sharpe"] is None else f"{stats['sharpe']:.2f}",
+                  help="Annualised from daily realised P&L. Shown once there are >= 10 trading days "
+                       f"(now {stats['days']}).")
+    with mc2:
+        st.metric("Win Rate", f"{stats['win_rate']:.0f}%", help=f"{stats['trades']} closed trades")
+    with mc3:
+        pf = stats["profit_factor"]
+        st.metric("Profit Factor", "n/a" if pf is None else f"{pf:.2f}",
+                  help="Rupees won / rupees lost, after charges. >1.5 = good")
+    with mc4:
+        st.metric("Avg Win", f"Rs {stats['avg_win']:+,.0f}", delta=f"{stats['avg_win_pct']:+.2f}%",
+                  delta_color="off", help="Per winning trade, after charges")
+    with mc5:
+        st.metric("Avg Loss", f"Rs {stats['avg_loss']:+,.0f}", delta=f"{stats['avg_loss_pct']:+.2f}%",
+                  delta_color="off", help="Per losing trade, after charges")
+    with mc6:
+        st.metric("Max Drawdown", f"-{stats['max_dd_pct']:.2f}%",
+                  help="Largest fall of realised equity, % of real capital")
+    dd = stats["dd_series"]
+    if len(dd) >= 2:
+        fig_dd = go.Figure(go.Scatter(x=dd["time"], y=dd["dd"], mode="lines", line_shape="hv",
+                                      line=dict(color="#f87171", width=1.5), fill="tozeroy",
+                                      fillcolor="rgba(248, 113, 113, 0.15)"))
+        fig_dd.update_layout(height=200, margin=dict(l=10, r=10, t=5, b=25),
+                             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                             xaxis=dict(gridcolor="rgba(255,255,255,0.06)", showgrid=True),
+                             yaxis=dict(gridcolor="rgba(255,255,255,0.06)", showgrid=True,
+                                        title="Drawdown %", autorange="reversed"),
+                             font=dict(color="#94a3b8", size=10), showlegend=False)
+        st.plotly_chart(fig_dd, width="stretch")
+
+
 def render_trades_tab():
     """Trade History (filtered by current mode: paper or live)"""
     trades = get_trades(limit=200, trading_mode=settings.trading.mode)
     if trades:
         df = pd.DataFrame(trades)
-        cols = ["timestamp", "symbol", "action", "quantity", "price",
-               "order_type", "status", "rationale", "agent_name", "order_id"]
+        df["timestamp"] = df["timestamp"].map(lambda t: to_ist(t, "%Y-%m-%d %H:%M:%S IST"))
+        cols = ["timestamp", "symbol", "action", "quantity", "price", "pnl", "charges",
+               "status", "rationale", "agent_name", "ref_price", "order_id"]
         available = [c for c in cols if c in df.columns]
         st.dataframe(df[available], width="stretch", hide_index=True, height=500)
     else:
@@ -1186,7 +1203,7 @@ def render_agent_logs_tab():
             for log in logs:
                 agent = log.get("agent_name", "")
                 log_type = log.get("log_type", "")
-                ts = log.get("timestamp", "")[-8:]  # just time
+                ts = to_ist(log.get("timestamp", ""), "%H:%M:%S")  # IST time
                 msg = log.get("message", "")
 
                 css_class = log_class_map.get(agent, log_class_map.get(log_type, "log-default"))
@@ -1694,7 +1711,7 @@ def render_live_activity_tab():
         agent = log.get("agent_name", "unknown")
         log_type = log.get("log_type", "")
         message = log.get("message", "")
-        ts = log.get("timestamp", "")
+        ts = to_ist(log.get("timestamp", ""), "%Y-%m-%d %H:%M:%S")
         details = log.get("details_json", "")
 
         # Skip tool calls if unchecked
