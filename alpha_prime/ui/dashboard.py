@@ -401,6 +401,9 @@ def render_header():
         elif trading_scheduler.is_running():
             st.markdown('<span class="badge badge-green">SCHEDULER ON</span>',
                        unsafe_allow_html=True)
+        elif external_scheduler_running():
+            st.markdown('<span class="badge badge-green">SCHEDULER ON (run_trading.py)</span>',
+                       unsafe_allow_html=True)
         else:
             st.markdown('<span class="badge badge-blue">SCHEDULER OFF</span>',
                        unsafe_allow_html=True)
@@ -564,9 +567,13 @@ def render_sidebar():
         st.markdown("---")
         st.markdown("#### Scheduler")
 
+        external = external_scheduler_running()
+        if external:
+            st.caption("Trading is running in its own window (run_trading.py). "
+                       "Stop it there with Ctrl+C; this dashboard only watches.")
         col1, col2 = st.columns(2)
         with col1:
-            start_disabled = trading_scheduler.is_running()
+            start_disabled = trading_scheduler.is_running() or external
             if st.button("Start" if not start_disabled else "Running",
                         disabled=start_disabled, width="stretch", type="primary"):
                 trading_scheduler.start()
@@ -635,6 +642,42 @@ def demo_portfolio_summary():
     }
 
 
+def external_scheduler_running() -> bool:
+    """True when another process (run_trading.py / start_experiment.bat) holds the scheduler lock."""
+    if settings.demo.enabled or trading_scheduler.is_running():
+        return False
+    import socket
+    from alpha_prime.core.scheduler import SCHEDULER_LOCK_PORT
+    probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        probe.bind(("127.0.0.1", SCHEDULER_LOCK_PORT))
+        return False
+    except OSError:
+        return True
+    finally:
+        probe.close()
+
+
+def realised_pnl(trading_mode: str) -> dict:
+    """Realised (closed-trade) P&L from the trades table, net of charges.
+
+    The paper broker rebuilds its cash from open positions only, so its summary
+    never includes money already made or lost on positions that are now closed.
+    Timestamps are stored in UTC; NSE hours fall on the same calendar date.
+    """
+    today = datetime.now(IST).strftime("%Y-%m-%d")
+    sells = [t for t in get_trades(limit=100000, trading_mode=trading_mode)
+             if t.get("action") == "SELL"
+             and str(t.get("status") or "").upper() not in ("REJECTED", "CANCELLED", "FAILED")]
+    sells.sort(key=lambda t: t["timestamp"])
+    return {
+        "today": sum((t.get("pnl") or 0.0) for t in sells if str(t["timestamp"]).startswith(today)),
+        "today_count": sum(1 for t in sells if str(t["timestamp"]).startswith(today)),
+        "total": sum((t.get("pnl") or 0.0) for t in sells),
+        "sells": sells,
+    }
+
+
 def render_portfolio_tab():
     """Portfolio Overview"""
 
@@ -677,23 +720,65 @@ def render_portfolio_tab():
         else:
             return f"{val:,.0f}"
 
+    paper = settings.trading.mode == "paper" and not settings.demo.enabled
+    realised = realised_pnl("paper") if paper else None
+    open_pnl = summary.get('total_pnl', 0)
+
     col1, col2, col3 = st.columns(3)
     with col1:
-        st.metric("Balance", f"Rs {fmt_rs(summary.get('available_cash', 0))}")
+        balance = summary.get('available_cash', 0) + (realised["total"] if paper else 0)
+        st.metric("Balance", f"Rs {fmt_rs(balance)}")
     with col2:
         st.metric("Invested in Intraday", f"Rs {fmt_rs(summary.get('total_invested', 0))}")
     with col3:
-        pnl = summary.get('total_pnl', 0)
-        pnl_pct = summary.get('total_pnl_pct', 0)
-        st.metric("Profit & Loss", f"Rs {fmt_rs(pnl)}", delta=f"{pnl_pct:+.2f}%")
+        if paper:
+            # Today = trades closed today + positions still open; % of REAL capital
+            pnl = realised["today"] + open_pnl
+            pnl_pct = pnl / settings.trading.capital * 100 if settings.trading.capital else 0
+            st.metric("Profit & Loss (today)", f"Rs {fmt_rs(pnl)}", delta=f"{pnl_pct:+.2f}%")
+        else:
+            pnl = summary.get('total_pnl', 0)
+            pnl_pct = summary.get('total_pnl_pct', 0)
+            st.metric("Profit & Loss", f"Rs {fmt_rs(pnl)}", delta=f"{pnl_pct:+.2f}%")
+    if paper:
+        st.caption(
+            f"Today: closed trades Rs {realised['today']:+,.0f} ({realised['today_count']} sold) · "
+            f"open positions Rs {open_pnl:+,.0f}  |  All closed trades since the start: "
+            f"Rs {realised['total']:+,.0f}  (all figures after charges)")
 
     st.markdown("")  # spacer
 
     col_chart, col_pos = st.columns([3, 2])
 
     with col_chart:
-        st.markdown("##### Portfolio Value History")
-        history = get_portfolio_history(limit=200)
+        if paper:
+            st.markdown("##### Realised P&L since the start (after charges)")
+            if realised["sells"]:
+                rdf = pd.DataFrame(realised["sells"])
+                rdf["time"] = (pd.to_datetime(rdf["timestamp"]).dt.tz_localize("UTC")
+                               .dt.tz_convert(IST).dt.tz_localize(None))
+                rdf["cum"] = rdf["pnl"].fillna(0).cumsum()
+                fig = go.Figure(go.Scatter(
+                    x=rdf["time"], y=rdf["cum"], mode="lines+markers", line_shape="hv",
+                    line=dict(color="#60a5fa", width=2.5), marker=dict(size=5),
+                    customdata=rdf[["symbol", "pnl"]],
+                    hovertemplate="%{x|%d %b %H:%M}<br>%{customdata[0]}: Rs %{customdata[1]:+,.0f}"
+                                  "<br>Total Rs %{y:+,.0f}<extra></extra>"))
+                fig.add_hline(y=0, line_color="rgba(255,255,255,0.25)", line_width=1)
+                fig.update_layout(
+                    height=380, margin=dict(l=10, r=10, t=10, b=30),
+                    paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                    xaxis=dict(gridcolor="rgba(255,255,255,0.06)", showgrid=True),
+                    yaxis=dict(gridcolor="rgba(255,255,255,0.06)", showgrid=True,
+                               title="Rs.", tickformat=","),
+                    font=dict(color="#94a3b8"), showlegend=False)
+                st.plotly_chart(fig, width="stretch")
+            else:
+                st.info("No closed trades yet.")
+            history = None
+        else:
+            st.markdown("##### Portfolio Value History")
+            history = get_portfolio_history(limit=200)
         if history:
             hist_df = pd.DataFrame(history)
             hist_df["timestamp"] = pd.to_datetime(hist_df["timestamp"])
@@ -722,7 +807,7 @@ def render_portfolio_tab():
                 showlegend=False
             )
             st.plotly_chart(fig, width="stretch")
-        else:
+        elif not paper:
             st.info("No portfolio history yet. Run a trading cycle to see data.")
 
     with col_pos:
