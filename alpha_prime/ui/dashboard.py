@@ -750,8 +750,11 @@ def render_portfolio_tab():
         else:
             return f"{val:,.0f}"
 
-    paper = settings.trading.mode == "paper" and not settings.demo.enabled
-    realised = realised_pnl("paper") if paper else None
+    # "paper" here means: show the app's own intraday result from the trades table. Live mode
+    # uses the same view - its summary separates the user's delivery holdings.
+    paper = not settings.demo.enabled
+    live = settings.trading.mode == "live" and not settings.demo.enabled
+    realised = realised_pnl(settings.trading.mode) if paper else None
     open_pnl = summary.get('unrealised_pnl', 0)
 
     col1, col2, col3 = st.columns(3)
@@ -759,7 +762,8 @@ def render_portfolio_tab():
         # The paper broker's cash already includes realised P&L (rebuilt from the trades table)
         st.metric("Balance", f"Rs {fmt_rs(summary.get('available_cash', 0))}")
     with col2:
-        st.metric("Invested in Intraday", f"Rs {fmt_rs(summary.get('total_invested', 0))}")
+        st.metric("Invested in Intraday",
+                  f"Rs {fmt_rs(summary.get('intraday_invested', summary.get('total_invested', 0)))}")
     with col3:
         if paper:
             # Today = trades closed today + positions still open; % of REAL capital
@@ -776,6 +780,9 @@ def render_portfolio_tab():
             f"{summary.get('realised_pnl', 0):+,.0f}, total Rs {summary.get('total_pnl', 0):+,.0f} "
             f"({summary.get('total_pnl_pct', 0):+.2f}% of Rs {fmt_rs(settings.trading.capital)})  "
             f"(after charges)")
+        if live and summary.get("holdings_invested"):
+            st.caption(f"Your delivery holdings (not traded by the app): Rs {summary['holdings_invested']:,.0f} "
+                       f"invested, P&L Rs {summary.get('holdings_pnl', 0):+,.0f}. Not included above.")
 
     st.markdown("")  # spacer
 

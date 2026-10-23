@@ -658,7 +658,25 @@ class GrowwBroker:
             total_current = pos_current + holdings_current
             total_pnl = total_current - total_invested
 
+            # The app's own result = intraday (MIS) positions + realised P&L of its trades.
+            # Delivery holdings belong to the account owner and are reported separately.
+            try:
+                realised_today = get_realised_pnl("live", since_utc=today_start_utc())
+                realised_all = get_realised_pnl("live")
+            except Exception:
+                realised_today = realised_all = 0.0
+            real_cap = settings.trading.capital or 1
+            today_pnl = realised_today + pos_pnl
+
             summary = {
+                "unrealised_pnl": round(pos_pnl, 2),
+                "intraday_invested": round(pos_invested, 2),
+                "realised_today": round(realised_today, 2),
+                "realised_pnl": round(realised_all, 2),
+                "today_pnl": round(today_pnl, 2),
+                "today_pnl_pct": round(today_pnl / real_cap * 100, 2),
+                "holdings_invested": round(holdings_invested, 2),
+                "holdings_pnl": round(holdings_current - holdings_invested, 2),
                 "capital": total_margin or (available + total_invested),
                 "available_cash": round(available, 2),
                 "total_invested": round(total_invested, 2),
