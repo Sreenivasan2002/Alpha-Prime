@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg
+  PUBLIC '-//W3C//DTD SVG 1.0//EN'
+  'http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd'>
+<svg width="555" height="232" preserveAspectRatio="xMinYMin meet" viewBox="0 0 555 232" xmlns="http://www.w3.org/2000/svg" version="1.0" fill-rule="evenodd" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<title>...</title>
+	<desc>...</desc>
+	<clipPath id="clip">
+		<rect x="0" y="0" width="555" height="232"/>
+	</clipPath>
+	<g id="group" transform="scale(1,-1) translate(0,-232)" style="clip-path: url(#clip)">
+		<g transform="">
+			<rect x="0" y="0" width="555" height="232" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<g transform=" matrix(1,0,0,1,20,20)">
+				<rect x="0.0" y="85.5" width="121.0" height="104.5" rx="4" ry="4" style="stroke: rgb(0%,51%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(90%,95%,90%); fill-rule: evenodd;"/>
+				<rect x="0.0" y="172" width="121.0" height="18" rx="4" ry="4" style="stroke: rgb(0%,51%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(0%,51%,0%); fill-rule: evenodd;"/>
+				<rect x="0.0" y="172" width="121.0" height="6" style="stroke: rgb(0%,51%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(0%,51%,0%); fill-rule: evenodd;"/>
+				<text x="7.0" y="177.5" style="font-family: Mono-Bold; font-size: 8px;fill: rgb(100%,100%,100%); stroke:none;" transform="translate(0,355) scale(1,-1)">trades</text>
+				<text x="7.0" y="159.0" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,318) scale(1,-1)">id, timestamp</text>
+				<text x="7.0" y="147.5" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,295) scale(1,-1)">symbol, action, qty, price</text>
+				<text x="7.0" y="136.0" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,272) scale(1,-1)">stop_loss, target, status</text>
+				<text x="7.0" y="124.5" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,249) scale(1,-1)">order_id, rationale</text>
+				<text x="7.0" y="113.0" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,226) scale(1,-1)">agent_name</text>
+				<text x="7.0" y="101.5" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,203) scale(1,-1)">pnl  (realised, SELL rows)</text>
+				<text x="7.0" y="90.0" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,180) scale(1,-1)">trading_mode  paper|live</text>
+				<rect x="131.33333333333334" y="108.5" width="121.0" height="81.5" rx="4" ry="4" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 1; fill: rgb(91%,94%,98%); fill-rule: evenodd;"/>
+				<rect x="131.33333333333334" y="172" width="121.0" height="18" rx="4" ry="4" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 1; fill: rgb(16%,47%,83%); fill-rule: evenodd;"/>
+				<rect x="131.33333333333334" y="172" width="121.0" height="6" style="stroke: rgb(16%,47%,83%); stroke-linecap: butt; stroke-width: 1; fill: rgb(16%,47%,83%); fill-rule: evenodd;"/>
+				<text x="138.33333333333334" y="177.5" style="font-family: Mono-Bold; font-size: 8px;fill: rgb(100%,100%,100%); stroke:none;" transform="translate(0,355) scale(1,-1)">signals</text>
+				<text x="138.33333333333334" y="159.0" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,318) scale(1,-1)">timestamp, symbol</text>
+				<text x="138.33333333333334" y="147.5" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,295) scale(1,-1)">signal_type  BUY | SELL | HOLD</text>
+				<text x="138.33333333333334" y="136.0" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,272) scale(1,-1)">strength  (engine value)</text>
+				<text x="138.33333333333334" y="124.5" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,249) scale(1,-1)">agent_name, reasoning</text>
+				<text x="138.33333333333334" y="113.0" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,226) scale(1,-1)">indicators_json, action_taken</text>
+				<rect x="262.6666666666667" y="120.0" width="121.0" height="70.0" rx="4" ry="4" style="stroke: rgb(83%,32%,12%); stroke-linecap: butt; stroke-width: 1; fill: rgb(99%,93%,90%); fill-rule: evenodd;"/>
+				<rect x="262.6666666666667" y="172" width="121.0" height="18" rx="4" ry="4" style="stroke: rgb(83%,32%,12%); stroke-linecap: butt; stroke-width: 1; fill: rgb(83%,32%,12%); fill-rule: evenodd;"/>
+				<rect x="262.6666666666667" y="172" width="121.0" height="6" style="stroke: rgb(83%,32%,12%); stroke-linecap: butt; stroke-width: 1; fill: rgb(83%,32%,12%); fill-rule: evenodd;"/>
+				<text x="269.6666666666667" y="177.5" style="font-family: Mono-Bold; font-size: 8px;fill: rgb(100%,100%,100%); stroke:none;" transform="translate(0,355) scale(1,-1)">monitored_positions</text>
+				<text x="269.6666666666667" y="159.0" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,318) scale(1,-1)">symbol  (PK)</text>
+				<text x="269.6666666666667" y="147.5" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,295) scale(1,-1)">entry_price, peak_price</text>
+				<text x="269.6666666666667" y="136.0" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,272) scale(1,-1)">stop_loss, target</text>
+				<text x="269.6666666666667" y="124.5" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,249) scale(1,-1)">registered_at, trading_mode</text>
+				<rect x="394.0" y="120.0" width="121.0" height="70.0" rx="4" ry="4" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: rgb(94%,93%,92%); fill-rule: evenodd;"/>
+				<rect x="394.0" y="172" width="121.0" height="18" rx="4" ry="4" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<rect x="394.0" y="172" width="121.0" height="6" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<text x="401.0" y="177.5" style="font-family: Mono-Bold; font-size: 8px;fill: rgb(100%,100%,100%); stroke:none;" transform="translate(0,355) scale(1,-1)">portfolio</text>
+				<text x="401.0" y="159.0" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,318) scale(1,-1)">timestamp, capital, invested</text>
+				<text x="401.0" y="147.5" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,295) scale(1,-1)">available, total_value</text>
+				<text x="401.0" y="136.0" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,272) scale(1,-1)">daily_pnl, total_pnl</text>
+				<text x="401.0" y="124.5" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,249) scale(1,-1)">positions_json</text>
+				<rect x="0.0" y="17.5" width="121.0" height="58.5" rx="4" ry="4" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: rgb(94%,93%,92%); fill-rule: evenodd;"/>
+				<rect x="0.0" y="58" width="121.0" height="18" rx="4" ry="4" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<rect x="0.0" y="58" width="121.0" height="6" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<text x="7.0" y="63.5" style="font-family: Mono-Bold; font-size: 8px;fill: rgb(100%,100%,100%); stroke:none;" transform="translate(0,127) scale(1,-1)">agent_logs</text>
+				<text x="7.0" y="45.0" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,90) scale(1,-1)">timestamp, agent_name</text>
+				<text x="7.0" y="33.5" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,67) scale(1,-1)">log_type, message</text>
+				<text x="7.0" y="22.0" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,44) scale(1,-1)">details_json</text>
+				<rect x="131.33333333333334" y="6.0" width="121.0" height="70.0" rx="4" ry="4" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: rgb(94%,93%,92%); fill-rule: evenodd;"/>
+				<rect x="131.33333333333334" y="58" width="121.0" height="18" rx="4" ry="4" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<rect x="131.33333333333334" y="58" width="121.0" height="6" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<text x="138.33333333333334" y="63.5" style="font-family: Mono-Bold; font-size: 8px;fill: rgb(100%,100%,100%); stroke:none;" transform="translate(0,127) scale(1,-1)">system_state</text>
+				<text x="138.33333333333334" y="45.0" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,90) scale(1,-1)">key (PK), value</text>
+				<text x="138.33333333333334" y="33.5" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,67) scale(1,-1)">updated_at</text>
+				<text x="138.33333333333334" y="22.0" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,44) scale(1,-1)">keys: day_start_cash_&lt;mode&gt;,</text>
+				<text x="138.33333333333334" y="10.5" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,21) scale(1,-1)">last_cycle_status ...</text>
+				<rect x="262.6666666666667" y="40.5" width="121.0" height="35.5" rx="4" ry="4" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: rgb(94%,93%,92%); fill-rule: evenodd;"/>
+				<rect x="262.6666666666667" y="58" width="121.0" height="18" rx="4" ry="4" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<rect x="262.6666666666667" y="58" width="121.0" height="6" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<text x="269.6666666666667" y="63.5" style="font-family: Mono-Bold; font-size: 8px;fill: rgb(100%,100%,100%); stroke:none;" transform="translate(0,127) scale(1,-1)">watchlist</text>
+				<text x="269.6666666666667" y="45.0" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,90) scale(1,-1)">symbol (PK), sector, notes</text>
+				<rect x="394.0" y="29.0" width="121.0" height="47.0" rx="4" ry="4" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: rgb(94%,93%,92%); fill-rule: evenodd;"/>
+				<rect x="394.0" y="58" width="121.0" height="18" rx="4" ry="4" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<rect x="394.0" y="58" width="121.0" height="6" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<text x="401.0" y="63.5" style="font-family: Mono-Bold; font-size: 8px;fill: rgb(100%,100%,100%); stroke:none;" transform="translate(0,127) scale(1,-1)">market_cache</text>
+				<text x="401.0" y="45.0" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,90) scale(1,-1)">cache_key (PK), data_json</text>
+				<text x="401.0" y="33.5" style="font-family: Mono; font-size: 6.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,67) scale(1,-1)">cached_at (TTL lookup)</text>
+			</g>
+		</g>
+	</g>
+</svg>

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg
+  PUBLIC '-//W3C//DTD SVG 1.0//EN'
+  'http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd'>
+<svg width="555" height="270" preserveAspectRatio="xMinYMin meet" viewBox="0 0 555 270" xmlns="http://www.w3.org/2000/svg" version="1.0" fill-rule="evenodd" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<title>...</title>
+	<desc>...</desc>
+	<clipPath id="clip">
+		<rect x="0" y="0" width="555" height="270"/>
+	</clipPath>
+	<g id="group" transform="scale(1,-1) translate(0,-270)" style="clip-path: url(#clip)">
+		<g transform="">
+			<rect x="0" y="0" width="555" height="270" style="stroke: none; stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd;"/>
+			<g transform=" matrix(1,0,0,1,20,20)">
+				<rect x="0" y="0" width="245" height="230" rx="7" ry="7" style="stroke: rgb(0%,51%,0%); stroke-linecap: butt; stroke-width: 1.1; fill: rgb(90%,95%,90%); fill-rule: evenodd;"/>
+				<text x="8" y="218" style="font-family: UI-Bold; font-size: 7px;fill: rgb(0%,51%,0%); stroke:none;" transform="translate(0,436) scale(1,-1)">LOCAL - THE REAL SYSTEM</text>
+				<rect x="270" y="0" width="245" height="230" rx="7" ry="7" style="stroke: rgb(69%,47%,0%); stroke-linecap: butt; stroke-width: 1.1; fill: rgb(99%,95%,87%); fill-rule: evenodd;"/>
+				<text x="278" y="218" style="font-family: UI-Bold; font-size: 7px;fill: rgb(69%,47%,0%); stroke:none;" transform="translate(0,436) scale(1,-1)">HOSTED - PUBLIC DEMO</text>
+				<rect x="10" y="170" width="110" height="34" rx="5" ry="5" style="stroke: rgb(69%,47%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(99%,95%,87%); fill-rule: evenodd;"/>
+				<text x="32.091845703125" y="187.498" style="font-family: UI-Bold; font-size: 7.8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,374) scale(1,-1)">run_dashboard.py</text>
+				<text x="48.742431640625" y="178.70199999999997" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,357) scale(1,-1)">Streamlit UI</text>
+				<rect x="128" y="170" width="108" height="34" rx="5" ry="5" style="stroke: rgb(29%,22%,65%); stroke-linecap: butt; stroke-width: 1; fill: rgb(93%,92%,98%); fill-rule: evenodd;"/>
+				<text x="155.071337890625" y="187.498" style="font-family: UI-Bold; font-size: 7.8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,374) scale(1,-1)">run_trading.py</text>
+				<text x="155.8017822265625" y="178.70199999999997" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,357) scale(1,-1)">headless scheduler</text>
+				<rect x="10" y="112" width="226" height="38" rx="5" ry="5" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: rgb(94%,93%,92%); fill-rule: evenodd;"/>
+				<text x="114.423046875" y="135.65599999999998" style="font-family: Mono-Bold; font-size: 7.8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,271) scale(1,-1)">.env</text>
+				<text x="72.670751953125" y="126.85999999999997" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,253) scale(1,-1)">TRADING_MODE, capital, risk knobs,</text>
+				<text x="92.001416015625" y="118.54399999999997" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,237) scale(1,-1)">Groww + OpenAI keys</text>
+				<rect x="10" y="58" width="110" height="36" rx="5" ry="5" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: rgb(94%,93%,92%); fill-rule: evenodd;"/>
+				<text x="34.9806640625" y="76.498" style="font-family: Mono-Bold; font-size: 7.8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,152) scale(1,-1)">alpha_prime.db</text>
+				<text x="48.99775390625" y="67.70200000000001" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,135) scale(1,-1)">read / write</text>
+				<rect x="128" y="58" width="108" height="36" rx="5" ry="5" style="stroke: rgb(53%,52%,50%); stroke-linecap: butt; stroke-width: 1; fill: rgb(100%,100%,100%); fill-rule: evenodd; stroke-dasharray: 3, 2;"/>
+				<text x="150.33916015625" y="76.498" style="font-family: UI-Bold; font-size: 7.8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,152) scale(1,-1)">Groww + OpenAI</text>
+				<text x="159.0025390625" y="67.70200000000001" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,135) scale(1,-1)">orders, LLM calls</text>
+				<text x="12" y="22" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,44) scale(1,-1)">requirements-full.txt - full stack incl.</text>
+				<text x="12" y="13" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,26) scale(1,-1)">langgraph, openai, growwapi, pandas-ta</text>
+				<polyline points="65 170, 65 150" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="65 150, 67.34736 154.4147, 62.65264 154.4147" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<polyline points="182 170, 182 150" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="182 150, 184.3474 154.4147, 179.6526 154.4147" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<polyline points="65 112, 65 94" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="65 94, 67.34736 98.41474, 62.65264 98.41474" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<polyline points="182 112, 182 94" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="182 94, 184.3474 98.41474, 179.6526 98.41474" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<rect x="280" y="170" width="226" height="34" rx="5" ry="5" style="stroke: rgb(69%,47%,0%); stroke-linecap: butt; stroke-width: 1; fill: rgb(99%,95%,87%); fill-rule: evenodd;"/>
+				<text x="358.6921875" y="187.498" style="font-family: Mono-Bold; font-size: 7.8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,374) scale(1,-1)">streamlit_app.py</text>
+				<text x="337.761181640625" y="178.70199999999997" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,357) scale(1,-1)">entrypoint Streamlit Cloud auto-detects</text>
+				<rect x="280" y="104" width="226" height="50" rx="5" ry="5" style="stroke: rgb(83%,32%,12%); stroke-linecap: butt; stroke-width: 1; fill: rgb(99%,93%,90%); fill-rule: evenodd;"/>
+				<text x="336.752783203125" y="137.814" style="font-family: UI-Bold; font-size: 7.8px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,275) scale(1,-1)">Before importing alpha_prime:</text>
+				<text x="330.741357421875" y="129.01799999999997" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,258) scale(1,-1)">DEMO_MODE=true, TRADING_MODE=paper</text>
+				<text x="341.32646484375" y="120.70199999999997" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,241) scale(1,-1)">pop GROWW_* and OPENAI_API_KEY</text>
+				<text x="335.3909912109375" y="112.38599999999997" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,224) scale(1,-1)">pin capital + risk knobs (host has no .env)</text>
+				<rect x="280" y="50" width="226" height="38" rx="5" ry="5" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: rgb(94%,93%,92%); fill-rule: evenodd;"/>
+				<text x="334.00595703125" y="73.792" style="font-family: Mono-Bold; font-size: 7.4px;fill: rgb(4%,4%,4%); stroke:none;" transform="translate(0,147) scale(1,-1)">data/demo/alpha_prime_demo.db</text>
+				<text x="338.3318115234375" y="65.12400000000001" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,130) scale(1,-1)">paper-only snapshot, live rows stripped</text>
+				<text x="351.0763916015625" y="56.808000000000014" style="font-family: UI; font-size: 6.3px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,113) scale(1,-1)">credential writes raise an error</text>
+				<text x="282" y="22" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,44) scale(1,-1)">requirements.txt - slim 9-package set; broker,</text>
+				<text x="282" y="13" style="font-family: UI; font-size: 6.5px;fill: rgb(32%,31%,30%); stroke:none;" transform="translate(0,26) scale(1,-1)">scheduler and pipeline are never imported</text>
+				<polyline points="393 170, 393 154" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="393 154, 395.3474 158.4147, 390.6526 158.4147" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+				<polyline points="393 104, 393 88" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 1; fill: None; fill-rule: evenodd;"/>
+				<polygon points="393 88, 395.3474 92.41474, 390.6526 92.41474" style="stroke: rgb(32%,31%,30%); stroke-linecap: butt; stroke-width: 0.5; fill: rgb(32%,31%,30%); fill-rule: evenodd;"/>
+			</g>
+		</g>
+	</g>
+</svg>

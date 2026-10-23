@@ -244,6 +244,8 @@ def scenario_rejected_sell():
     check("rejected SELL stored pnl=0 (no false loss/cooldown)",
           sell is not None and sell["pnl"] == 0.0,
           f"got {sell['pnl'] if sell else None}")
+    # Hold the price flat: a held position down >1% is its own (separate) cooldown rule.
+    mock.positions = [_pos("WIPRO", 20, 400.0, 400.0)]
     check("no cooldown from a rejected SELL",
           _check_stock_cooldown("WIPRO") is False)
 

@@ -1,0 +1,22 @@
+== self-check: wrapper reproduces stand-alone strategies ==
+  harness.run == run (gap/train): True
+  regime_momentum    cap= 1,000,000  stand-alone    3,840.22 (38)  wrapper    3,840.22 (38)  OK
+  regime_momentum    cap=   142,857  stand-alone   -1,102.57 (38)  wrapper   -1,102.57 (38)  OK
+  orb                cap= 1,000,000  stand-alone   39,868.05 (183)  wrapper   39,868.05 (183)  OK
+  orb                cap=   142,857  stand-alone   -2,334.79 (182)  wrapper   -2,334.79 (182)  OK
+  vwap_reversion     cap= 1,000,000  stand-alone    1,078.28 (155)  wrapper    1,078.28 (155)  OK
+  vwap_reversion     cap=   142,857  stand-alone   -6,271.58 (154)  wrapper   -6,271.58 (154)  OK
+  gap                cap= 1,000,000  stand-alone   86,587.13 (159)  wrapper   86,587.13 (159)  OK
+  gap                cap=   142,857  stand-alone    6,472.79 (156)  wrapper    6,472.79 (156)  OK
+  rs_neutral         cap= 1,000,000  stand-alone   56,445.40 (132)  wrapper   56,445.40 (132)  OK
+  rs_neutral         cap=   142,857  stand-alone    2,176.13 (131)  wrapper    2,176.13 (131)  OK
+  index_trend        cap= 1,000,000  stand-alone   37,729.44 (95)  wrapper   37,729.44 (95)  OK
+  index_trend        cap=   142,857  stand-alone    1,806.02 (94)  wrapper    1,806.02 (94)  OK
+  low_freq_breakout  cap= 1,000,000  stand-alone   60,968.71 (54)  wrapper   60,968.71 (54)  OK
+  low_freq_breakout  cap=   142,857  stand-alone    6,350.43 (54)  wrapper    6,350.43 (54)  OK
+  all OK
+== gate leak checks ==
+  leak_check RG_beta: {'checked': 72, 'n_mismatches': 0}  (243s)
+  leak_check RG_fit: {'checked': 72, 'n_mismatches': 0}  (244s)
+  leak_check PERF5: {'checked': 56, 'n_mismatches': 0}  (526s)
+wrote results/portfolio_checks.json (1254s)

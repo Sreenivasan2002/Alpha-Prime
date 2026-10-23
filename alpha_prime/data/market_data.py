@@ -18,7 +18,7 @@ from alpha_prime.core.database import cache_set, cache_get
 # re-exported here so existing imports of these names keep working.
 from alpha_prime.core.market_hours import (  # noqa: F401
     clean_symbol, is_market_open, is_trading_window,
-    is_pre_market, time_to_market_open,
+    is_pre_market, time_to_market_open, is_trading_day,
 )
 
 
@@ -46,26 +46,62 @@ class MarketDataEngine:
 
     def __init__(self):
         self._cache = {}
+        self._session = {"t": 0.0, "live": False, "last_bar": None}
+
+    def session_is_live(self, max_age_min: float = 12) -> bool:
+        """True when NIFTY has a 1-min bar from TODAY that is at most `max_age_min` old.
+
+        Backstop for the holiday calendar: on a closed day (holiday, outage) yfinance keeps
+        returning the previous session's last price, which the app used to trade on.
+        Cached for 60 s. Outside market hours it is False by definition."""
+        import time as _time
+        if not is_market_open():
+            return False
+        if _time.time() - self._session["t"] < 60:
+            return self._session["live"]
+        live, last = False, None
+        try:
+            h = yf.Ticker("^NSEI").history(period="1d", interval="1m")
+            if not h.empty:
+                last = h.index[-1].tz_convert(IST)
+                now = datetime.now(IST)
+                live = last.date() == now.date() and (now - last).total_seconds() <= max_age_min * 60 + 60
+        except Exception as e:
+            logger.warning(f"Session check failed: {e}")
+        if not live:
+            logger.warning(f"No live NSE session data (last NIFTY bar: {last}). Treating market as closed.")
+        self._session.update(t=_time.time(), live=live, last_bar=str(last) if last is not None else None)
+        return live
 
     def get_live_price(self, symbol: str) -> Optional[float]:
-        """Get the latest available price for a symbol"""
+        """Latest price for a symbol.
+
+        While the market should be open, only a price from TODAY's live session is returned
+        (None otherwise) - fills, stops, sizing and P&L must never use the previous close.
+        When the market is closed, the last price / previous close is returned for display."""
+        trading = is_market_open()
+        if trading and not self.session_is_live():
+            return None
         try:
             nse_sym = to_nse_symbol(symbol)
             ticker = yf.Ticker(nse_sym)
             info = ticker.fast_info
             price = getattr(info, 'last_price', None)
-            if price is None:
+            if price is None and not trading:
                 price = getattr(info, 'previous_close', None)
             if price and price > 0:
                 return round(float(price), 2)
         except Exception as e:
             logger.warning(f"Failed to get price for {symbol}: {e}")
 
-        # Fallback: try from history
+        # Fallback: today's 1-minute bars
         try:
             nse_sym = to_nse_symbol(symbol)
             hist = yf.download(nse_sym, period="1d", interval="1m", progress=False)
             if not hist.empty:
+                last_day = hist.index[-1].tz_convert(IST).date() if hist.index.tz is not None else None
+                if trading and last_day != datetime.now(IST).date():
+                    return None
                 # Handle both MultiIndex and regular columns
                 if isinstance(hist.columns, pd.MultiIndex):
                     price = float(hist["Close"].iloc[-1].values[0])
@@ -78,8 +114,10 @@ class MarketDataEngine:
         return None
 
     def get_multiple_prices(self, symbols: List[str]) -> Dict[str, float]:
-        """Get prices for multiple symbols efficiently"""
+        """Get prices for multiple symbols efficiently (none while the session is not live)"""
         prices = {}
+        if is_market_open() and not self.session_is_live():
+            return prices
         nse_symbols = [to_nse_symbol(s) for s in symbols]
         try:
             tickers = yf.Tickers(" ".join(nse_symbols))
@@ -88,7 +126,9 @@ class MarketDataEngine:
                     ticker = tickers.tickers.get(nse_sym)
                     if ticker:
                         info = ticker.fast_info
-                        price = getattr(info, 'last_price', None) or getattr(info, 'previous_close', None)
+                        price = getattr(info, 'last_price', None)
+                        if price is None and not is_market_open():
+                            price = getattr(info, 'previous_close', None)
                         if price and price > 0:
                             prices[clean_symbol(orig_sym)] = round(float(price), 2)
                 except Exception:
@@ -179,7 +219,7 @@ class MarketDataEngine:
             "TECHM", "BAJAJFINSV", "HDFCLIFE", "DIVISLAB", "DRREDDY",
             "SBILIFE", "GRASIM", "CIPLA", "COALINDIA", "BRITANNIA",
             "BPCL", "EICHERMOT", "INDUSINDBK", "TATACONSUM", "APOLLOHOSP",
-            "HEROMOTOCO", "BAJAJ-AUTO", "UPL", "HINDALCO", "LTIM"
+            "HEROMOTOCO", "BAJAJ-AUTO", "UPL", "HINDALCO", "LTM"
         ]
 
     def get_banknifty_stocks(self) -> List[str]:
@@ -203,7 +243,7 @@ class MarketDataEngine:
             "NHPC", "PFC", "PIDILITIND", "PNB", "POLYCAB",
             "RECLTD", "SBICARD", "SHREECEM", "SIEMENS", "SRF",
             "TATAPOWER", "TORNTPHARM", "TRENT", "UNITDSPR", "VEDL",
-            "VBL", "YESBANK", "ZOMATO", "ZYDUSLIFE", "HAL"
+            "VBL", "YESBANK", "ETERNAL", "ZYDUSLIFE", "HAL"
         ]
         return nifty50 + next50
 

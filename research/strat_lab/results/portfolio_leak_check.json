@@ -1,0 +1,14 @@
+{
+ "RG_beta": {
+  "checked": 72,
+  "n_mismatches": 0
+ },
+ "RG_fit": {
+  "checked": 72,
+  "n_mismatches": 0
+ },
+ "PERF5": {
+  "checked": 56,
+  "n_mismatches": 0
+ }
+}

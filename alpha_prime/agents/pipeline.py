@@ -308,6 +308,8 @@ Evaluate both sides and make a GO / NO-GO decision for each stock.
     logger.info(f"[debate] Judge verdict: {judge_output[:300]}...")
 
     # Combine debate output for risk manager
+    judge_header = ("JUDGE VERDICT:" if settings.trading.debate_veto else
+                    "JUDGE VERDICT (ADVISORY ONLY - a NO-GO here does NOT block the trade; weigh it as one input):")
     debate_summary = f"""=== BULL/BEAR DEBATE RESULTS ===
 
 BULL ARGUMENTS:
@@ -316,7 +318,7 @@ BULL ARGUMENTS:
 BEAR ARGUMENTS:
 {bear_output}
 
-JUDGE VERDICT:
+{judge_header}
 {judge_output}
 
 === ORIGINAL ANALYST RECOMMENDATION ===
@@ -358,6 +360,11 @@ For each proposed trade:
 5. If approved, specify exact: symbol, action, quantity, entry, stop-loss, target
 
 Output a clear list of APPROVED trades with exact parameters, or explain why trades were rejected."""
+    if not settings.trading.debate_veto:
+        user_msg += (
+            "\n\nNOTE: The Bull/Bear debate is ADVISORY in this run. Do NOT reject a trade only because the judge "
+            "said NO-GO. APPROVE every analyst BUY signal that satisfies the numeric risk rules (stop-loss, target, "
+            "risk:reward, position limits, cash). Position size is clamped in code afterwards.")
 
     # Risk manager gets portfolio tools but NOT the place_trade tool
     risk_tools = MARKET_ANALYSIS_TOOLS + [

@@ -17,46 +17,79 @@ import pytz
 
 from alpha_prime.core.config import settings
 from alpha_prime.core.database import (
-    record_trade, get_open_positions, save_portfolio_snapshot,
+    record_trade, get_open_positions, save_portfolio_snapshot, get_realised_pnl, today_start_utc,
     log_agent_activity, set_system_state, get_system_state
 )
 from alpha_prime.data.market_data import market_data, clean_symbol
+from alpha_prime.core.costs import intraday_round_trip_cost
 
 IST = pytz.timezone("Asia/Kolkata")
 
+_nifty_cache = {"t": 0.0, "px": None}
+
+
+def _nifty_level() -> Optional[float]:
+    """NIFTY 50 level at (about) the moment of a fill, cached 30s. Instrumentation only:
+    lets the daily report measure the market's move over each holding window."""
+    import time
+    if _nifty_cache["px"] and time.time() - _nifty_cache["t"] < 30:
+        return _nifty_cache["px"]
+    try:
+        import yfinance as yf
+        px = getattr(yf.Ticker("^NSEI").fast_info, "last_price", None)
+        if px and px > 0:
+            _nifty_cache.update(t=time.time(), px=round(float(px), 2))
+            return _nifty_cache["px"]
+    except Exception as e:
+        logger.debug(f"NIFTY level unavailable: {e}")
+    return None
+
 
 class PaperTradingBroker:
-    """Paper trading broker for simulation/testing"""
+    """Paper trading broker for simulation/testing.
+
+    The trades table is the single source of truth: the book is rebuilt from it before
+    every order and every read. Several broker objects (the scheduler, the dashboard, a
+    script, a reloaded module) therefore always agree, and cash always includes the
+    realised P&L of closed trades. Keeping private in-memory books made copies disagree
+    (7 Oct: positions left open) and dropped all realised P&L on every restart."""
 
     def __init__(self):
         self.capital = settings.trading.effective_capital  # Use margin-adjusted capital
         self.actual_capital = settings.trading.capital       # Real cash
         self.positions: Dict[str, dict] = {}
         self.available_cash = self.capital
+        self.realised_total = 0.0
         self._load_state()
 
     def _load_state(self):
-        """Load existing positions from database (paper mode only)"""
+        """Rebuild positions and cash from the database (paper mode only).
+        cash = margin buying power + realised P&L of all closed trades - cost of open positions."""
+        positions, realised = {}, 0.0
         try:
-            open_pos = get_open_positions(trading_mode="paper")
-            for pos in open_pos:
-                symbol = pos["symbol"]
+            realised = get_realised_pnl(trading_mode="paper")
+            for pos in get_open_positions(trading_mode="paper"):
                 qty = pos["net_qty"]
                 avg_price = pos["avg_buy_price"] or 0
                 if qty > 0:
-                    self.positions[symbol] = {
+                    positions[pos["symbol"]] = {
                         "quantity": qty,
                         "avg_price": avg_price,
-                        "invested": qty * avg_price
+                        "invested": qty * avg_price,
+                        "opened_at": pos.get("opened_at"),
                     }
-                    self.available_cash -= qty * avg_price
         except Exception as e:
             logger.warning(f"Could not load paper trading state: {e}")
+            return
+        self.positions = positions
+        self.realised_total = realised
+        self.available_cash = self.capital + realised - sum(p["invested"] for p in positions.values())
 
     def place_order(self, symbol: str, action: str, quantity: int,
                     order_type: str = "MARKET", price: float = None,
                     stop_loss: float = None, target: float = None,
-                    rationale: str = "", agent_name: str = "") -> Dict:
+                    rationale: str = "", agent_name: str = "",
+                    ref_price: float = None) -> Dict:
         """Place a paper trade order"""
         symbol = clean_symbol(symbol)
         try:
@@ -65,12 +98,15 @@ class PaperTradingBroker:
             quantity = 0
         if quantity <= 0:
             return {"status": "FAILED", "error": f"Invalid quantity {quantity}: must be positive."}
+        self._load_state()  # another process may have traded since our last look
         current_price = price or market_data.get_live_price(symbol)
 
         if current_price is None:
             return {"status": "FAILED", "error": f"Could not get price for {symbol}"}
 
         realized_pnl = 0.0
+        gross_pnl = 0.0
+        charges = 0.0
 
         if action.upper() == "BUY":
             total_cost = current_price * quantity
@@ -110,7 +146,11 @@ class PaperTradingBroker:
             sell_value = current_price * quantity
             avg_buy = self.positions[symbol]["avg_price"]
             # Realized P&L for this sell (FIFO/average-cost): (exit - avg_entry) * qty
-            realized_pnl = (current_price - avg_buy) * quantity
+            gross_pnl = (current_price - avg_buy) * quantity
+            # Deduct the round trip's brokerage/STT/GST etc. so paper P&L is NET, like a real account
+            charges = (intraday_round_trip_cost(avg_buy * quantity, sell_value)
+                       if settings.trading.paper_include_charges else 0.0)
+            realized_pnl = gross_pnl - charges
 
             self.positions[symbol]["quantity"] -= quantity
             self.positions[symbol]["invested"] -= avg_buy * quantity
@@ -118,7 +158,8 @@ class PaperTradingBroker:
             if self.positions[symbol]["quantity"] == 0:
                 del self.positions[symbol]
 
-            self.available_cash += sell_value
+            self.available_cash += sell_value - charges
+            self.realised_total += realized_pnl
         else:
             return {"status": "FAILED", "error": f"Unknown action: {action}"}
 
@@ -127,10 +168,14 @@ class PaperTradingBroker:
             price=current_price, order_type=order_type,
             stop_loss=stop_loss, target=target,
             rationale=rationale, agent_name=agent_name,
-            order_id=f"PAPER-{datetime.now(IST).strftime('%Y%m%d%H%M%S')}",
+            order_id=f"PAPER-{datetime.now(IST).strftime('%Y%m%d%H%M%S%f')}",
             status="EXECUTED",
             trading_mode="paper",
             pnl=realized_pnl,
+            ref_price=ref_price,
+            nifty_price=_nifty_level(),
+            charges=round(charges, 2) if action.upper() == "SELL" else None,
+            gross_pnl=round(gross_pnl, 2) if action.upper() == "SELL" else None,
         )
 
         result = {
@@ -142,6 +187,8 @@ class PaperTradingBroker:
             "price": current_price,
             "total_value": current_price * quantity,
             "realized_pnl": round(realized_pnl, 2),
+            "gross_pnl": round(gross_pnl, 2),
+            "charges": round(charges, 2),
             "available_cash": round(self.available_cash, 2),
             "mode": "PAPER"
         }
@@ -152,10 +199,14 @@ class PaperTradingBroker:
         return result
 
     def get_positions(self) -> Dict[str, dict]:
-        """Get current positions with live values"""
+        """Get current positions with live values.
+        If no live quote is available the position is valued at cost and flagged
+        quote_ok=False (its P&L then reads 0 - it is unknown, not flat)."""
+        self._load_state()
         positions_with_value = {}
         for symbol, pos in self.positions.items():
-            current_price = market_data.get_live_price(symbol) or pos["avg_price"]
+            quote = market_data.get_live_price(symbol)
+            current_price = quote or pos["avg_price"]
             current_value = current_price * pos["quantity"]
             pnl = current_value - pos["invested"]
             pnl_pct = (pnl / pos["invested"] * 100) if pos["invested"] > 0 else 0
@@ -167,36 +218,57 @@ class PaperTradingBroker:
                 "invested": round(pos["invested"], 2),
                 "current_value": round(current_value, 2),
                 "pnl": round(pnl, 2),
-                "pnl_pct": round(pnl_pct, 2)
+                "pnl_pct": round(pnl_pct, 2),
+                "quote_ok": bool(quote),
+                "opened_at": pos.get("opened_at"),
             }
         return positions_with_value
 
-    def get_portfolio_summary(self) -> Dict:
-        """Get complete portfolio summary"""
+    def get_portfolio_summary(self, save_snapshot: bool = False) -> Dict:
+        """Complete portfolio summary.
+
+        total_pnl = realised (all closed trades, after charges) + unrealised (open positions);
+        today_pnl = realised today + unrealised. Percentages are of REAL capital, not the 5x
+        margin figure. A snapshot row is written only when save_snapshot=True (the scheduler's
+        monitor does this) - every caller used to write one, including each dashboard render."""
         positions = self.get_positions()
         total_invested = sum(p["invested"] for p in positions.values())
         total_current = sum(p["current_value"] for p in positions.values())
-        total_pnl = total_current - total_invested
+        unrealised = total_current - total_invested
         total_value = self.available_cash + total_current
+        try:
+            realised_today = get_realised_pnl("paper", since_utc=today_start_utc())
+        except Exception:
+            realised_today = 0.0
+        total_pnl = self.realised_total + unrealised
+        today_pnl = realised_today + unrealised
+        real = self.actual_capital or 1
 
         summary = {
             "capital": self.capital,
+            "real_capital": self.actual_capital,
             "available_cash": round(self.available_cash, 2),
             "total_invested": round(total_invested, 2),
             "total_current_value": round(total_current, 2),
             "total_portfolio_value": round(total_value, 2),
+            "unrealised_pnl": round(unrealised, 2),
+            "realised_pnl": round(self.realised_total, 2),
+            "realised_today": round(realised_today, 2),
+            "today_pnl": round(today_pnl, 2),
+            "today_pnl_pct": round(today_pnl / real * 100, 2),
             "total_pnl": round(total_pnl, 2),
-            "total_pnl_pct": round((total_pnl / self.capital * 100), 2) if self.capital > 0 else 0,
+            "total_pnl_pct": round(total_pnl / real * 100, 2),
             "num_positions": len(positions),
             "positions": positions,
             "mode": "PAPER"
         }
 
-        save_portfolio_snapshot(
-            capital=self.capital, invested=total_invested,
-            available=self.available_cash, total_value=total_value,
-            daily_pnl=total_pnl, total_pnl=total_pnl, positions=positions
-        )
+        if save_snapshot:
+            save_portfolio_snapshot(
+                capital=self.actual_capital, invested=total_invested,
+                available=self.available_cash, total_value=total_value,
+                daily_pnl=today_pnl, total_pnl=total_pnl, positions=positions
+            )
         return summary
 
     def get_user_profile(self) -> Dict:
@@ -317,7 +389,8 @@ class GrowwBroker:
     def place_order(self, symbol: str, action: str, quantity: int,
                     order_type: str = "MARKET", price: float = None,
                     stop_loss: float = None, target: float = None,
-                    rationale: str = "", agent_name: str = "") -> Dict:
+                    rationale: str = "", agent_name: str = "",
+                    ref_price: float = None) -> Dict:
         """Place a live order via Groww API"""
         self._ensure_client()
         symbol = clean_symbol(symbol)
@@ -435,6 +508,8 @@ class GrowwBroker:
                 order_id=str(order_id), status=order_status,
                 trading_mode="live",
                 pnl=realized_pnl,
+                ref_price=ref_price,
+                nifty_price=_nifty_level(),
             )
 
             result = {
@@ -519,7 +594,7 @@ class GrowwBroker:
             logger.error(f"Error fetching positions: {e}")
             return {}
 
-    def get_portfolio_summary(self) -> Dict:
+    def get_portfolio_summary(self, save_snapshot: bool = False) -> Dict:
         """Get portfolio summary from Groww (includes funds, positions, and holdings)"""
         self._ensure_client()
         try:
@@ -583,7 +658,25 @@ class GrowwBroker:
             total_current = pos_current + holdings_current
             total_pnl = total_current - total_invested
 
+            # The app's own result = intraday (MIS) positions + realised P&L of its trades.
+            # Delivery holdings belong to the account owner and are reported separately.
+            try:
+                realised_today = get_realised_pnl("live", since_utc=today_start_utc())
+                realised_all = get_realised_pnl("live")
+            except Exception:
+                realised_today = realised_all = 0.0
+            real_cap = settings.trading.capital or 1
+            today_pnl = realised_today + pos_pnl
+
             summary = {
+                "unrealised_pnl": round(pos_pnl, 2),
+                "intraday_invested": round(pos_invested, 2),
+                "realised_today": round(realised_today, 2),
+                "realised_pnl": round(realised_all, 2),
+                "today_pnl": round(today_pnl, 2),
+                "today_pnl_pct": round(today_pnl / real_cap * 100, 2),
+                "holdings_invested": round(holdings_invested, 2),
+                "holdings_pnl": round(holdings_current - holdings_invested, 2),
                 "capital": total_margin or (available + total_invested),
                 "available_cash": round(available, 2),
                 "total_invested": round(total_invested, 2),
@@ -599,15 +692,16 @@ class GrowwBroker:
                 "funds_raw": funds_data,
             }
 
-            save_portfolio_snapshot(
-                capital=summary["capital"],
-                invested=total_invested,
-                available=available,
-                total_value=summary["total_portfolio_value"],
-                daily_pnl=total_pnl,
-                total_pnl=total_pnl,
-                positions=positions
-            )
+            if save_snapshot:
+                save_portfolio_snapshot(
+                    capital=summary["capital"],
+                    invested=total_invested,
+                    available=available,
+                    total_value=summary["total_portfolio_value"],
+                    daily_pnl=total_pnl,
+                    total_pnl=total_pnl,
+                    positions=positions
+                )
             return summary
 
         except Exception as e:
@@ -704,14 +798,7 @@ def get_today_pnl_pct() -> float:
 
         # Get realised P&L from today's completed trades (single source of truth
         # for realised intraday P&L, accurate in both paper and live modes).
-        from alpha_prime.core.database import get_trades
-        today_trades = get_trades(limit=100, trading_mode=settings.trading.mode)
-        today_ist = datetime.now(IST).strftime("%Y-%m-%d")
-        realised_pnl = 0.0
-        for t in (today_trades or []):
-            ts = t.get("timestamp", "")
-            if today_ist in ts and t.get("action") == "SELL":
-                realised_pnl += t.get("pnl", 0) or 0
+        realised_pnl = get_realised_pnl(settings.trading.mode, since_utc=today_start_utc())
 
         total_intraday_pnl = intraday_pnl + realised_pnl
         capital = settings.trading.capital  # Use actual capital, not margin-inflated
